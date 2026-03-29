@@ -65,6 +65,12 @@ async function PractitionerDashboard({
     .lte("start_at", endOfWeek.toISOString())
     .neq("status", "cancelled");
 
+  // Patient count
+  const { count: patientCount } = await supabase
+    .from("patients")
+    .select("id", { count: "exact", head: true })
+    .eq("practitioner_id", practitioner.id);
+
   // This month revenue
   const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-01`;
   const { count: monthAptsCount } = await supabase
@@ -103,7 +109,7 @@ async function PractitionerDashboard({
         <StatCard title="CA du mois" value={`${monthRevenue}€`} />
         <StatCard
           title="Patients"
-          value="—"
+          value={String(patientCount ?? 0)}
         />
       </div>
 
@@ -124,14 +130,20 @@ async function PractitionerDashboard({
         ) : (
           <div className="space-y-2">
             {todayApts?.map((apt) => {
-              const start = new Date(apt.start_at as string);
-              const end = new Date(apt.end_at as string);
-              const patients = apt.patients as unknown as Record<string, unknown>;
-              const profiles = (patients?.profiles ?? {}) as Record<string, unknown>;
-              const patientName = (profiles?.full_name as string) ?? "Patient";
+              const a = apt as unknown as {
+                id: string;
+                start_at: string;
+                end_at: string;
+                type: string;
+                status: string;
+                patients: { profiles: { full_name: string } };
+              };
+              const start = new Date(a.start_at);
+              const end = new Date(a.end_at);
+              const patientName = a.patients?.profiles?.full_name ?? "Patient";
               return (
                 <div
-                  key={apt.id as string}
+                  key={a.id}
                   className="flex items-center gap-4 rounded-md border px-4 py-2"
                 >
                   <span className="text-sm font-medium">
@@ -147,7 +159,7 @@ async function PractitionerDashboard({
                   </span>
                   <span className="text-sm">{patientName}</span>
                   <span className="text-xs text-muted-foreground">
-                    {apt.type === "teleconsultation"
+                    {a.type === "teleconsultation"
                       ? "Téléconsultation"
                       : "En cabinet"}
                   </span>
@@ -177,6 +189,21 @@ async function PatientDashboard({
     .single();
 
   if (!patient) redirect("/onboarding");
+
+  // Document counts for the patient
+  const { count: sharedNotesCount } = await supabase
+    .from("shared_notes")
+    .select("id", { count: "exact", head: true })
+    .eq("patient_id", patient.id)
+    .eq("is_visible_to_patient", true);
+
+  const { count: sharedMediaCount } = await supabase
+    .from("shared_media")
+    .select("id", { count: "exact", head: true })
+    .eq("patient_id", patient.id)
+    .eq("is_visible_to_patient", true);
+
+  const totalDocs = (sharedNotesCount ?? 0) + (sharedMediaCount ?? 0);
 
   const { data: upcoming } = await supabase
     .from("appointments")
@@ -213,13 +240,20 @@ async function PatientDashboard({
         ) : (
           <div className="space-y-2">
             {upcoming?.map((apt) => {
-              const start = new Date(apt.start_at as string);
-              const practitioners = apt.practitioners as unknown as Record<string, unknown>;
-              const pProfiles = (practitioners?.profiles ?? {}) as Record<string, unknown>;
-              const pracName = (pProfiles?.full_name as string) ?? "Praticien";
+              const a = apt as unknown as {
+                id: string;
+                start_at: string;
+                end_at: string;
+                type: string;
+                status: string;
+                jitsi_room_url: string | null;
+                practitioners: { profiles: { full_name: string }; specialty: string };
+              };
+              const start = new Date(a.start_at);
+              const pracName = a.practitioners?.profiles?.full_name ?? "Praticien";
               return (
                 <div
-                  key={apt.id as string}
+                  key={a.id}
                   className="flex items-center justify-between rounded-md border px-4 py-3"
                 >
                   <div>
@@ -239,10 +273,10 @@ async function PatientDashboard({
                       })}
                     </p>
                   </div>
-                  {apt.type === "teleconsultation" &&
-                    apt.jitsi_room_url && (
+                  {a.type === "teleconsultation" &&
+                    a.jitsi_room_url && (
                       <Link
-                        href={apt.jitsi_room_url as string}
+                        href={a.jitsi_room_url}
                         className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
                       >
                         Rejoindre
@@ -256,10 +290,28 @@ async function PatientDashboard({
       </div>
 
       <div className="rounded-lg border p-6">
-        <h2 className="mb-4 text-lg font-semibold">Documents partagés</h2>
-        <p className="text-sm text-muted-foreground">
-          Aucun document partagé pour le moment.
-        </p>
+        <div className="mb-4 flex items-center justify-between">
+          <h2 className="text-lg font-semibold">Documents partagés</h2>
+          {totalDocs > 0 && (
+            <Link
+              href="/dashboard/documents"
+              className="text-sm text-primary hover:underline"
+            >
+              Tout voir →
+            </Link>
+          )}
+        </div>
+        {totalDocs === 0 ? (
+          <p className="text-sm text-muted-foreground">
+            Aucun document partagé pour le moment.
+          </p>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            {sharedNotesCount ?? 0} note{(sharedNotesCount ?? 0) > 1 ? "s" : ""} et{" "}
+            {sharedMediaCount ?? 0} fichier{(sharedMediaCount ?? 0) > 1 ? "s" : ""} partagé
+            {(sharedMediaCount ?? 0) > 1 ? "s" : ""}
+          </p>
+        )}
       </div>
     </div>
   );

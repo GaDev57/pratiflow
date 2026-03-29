@@ -67,6 +67,9 @@ export interface Database {
           subscription_plan: SubscriptionPlan;
           timezone: string;
           google_calendar_token: string | null;
+          services: Record<string, unknown>[];
+          address: string | null;
+          hero_image_url: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -83,6 +86,9 @@ export interface Database {
           subscription_plan?: SubscriptionPlan;
           timezone?: string;
           google_calendar_token?: string | null;
+          services?: Record<string, unknown>[];
+          address?: string | null;
+          hero_image_url?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -97,6 +103,9 @@ export interface Database {
           subscription_plan?: SubscriptionPlan;
           timezone?: string;
           google_calendar_token?: string | null;
+          services?: Record<string, unknown>[];
+          address?: string | null;
+          hero_image_url?: string | null;
           updated_at?: string;
         };
       };
@@ -362,8 +371,108 @@ export interface Database {
         };
         Update: never;
       };
+      document_categories: {
+        Row: {
+          id: string;
+          practitioner_id: string;
+          name: string;
+          description: string | null;
+          color: string;
+          sort_order: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          practitioner_id: string;
+          name: string;
+          description?: string | null;
+          color?: string;
+          sort_order?: number;
+          created_at?: string;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          color?: string;
+          sort_order?: number;
+        };
+      };
+      document_templates: {
+        Row: {
+          id: string;
+          practitioner_id: string;
+          category_id: string | null;
+          title: string;
+          template_type: "rich_text" | "pdf" | "questionnaire";
+          content_json: Record<string, unknown>;
+          file_path: string | null;
+          file_type: string | null;
+          is_questionnaire: boolean;
+          questionnaire_fields: Record<string, unknown>[] | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          practitioner_id: string;
+          category_id?: string | null;
+          title: string;
+          template_type?: "rich_text" | "pdf" | "questionnaire";
+          content_json?: Record<string, unknown>;
+          file_path?: string | null;
+          file_type?: string | null;
+          is_questionnaire?: boolean;
+          questionnaire_fields?: Record<string, unknown>[] | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          category_id?: string | null;
+          title?: string;
+          template_type?: "rich_text" | "pdf" | "questionnaire";
+          content_json?: Record<string, unknown>;
+          file_path?: string | null;
+          file_type?: string | null;
+          is_questionnaire?: boolean;
+          questionnaire_fields?: Record<string, unknown>[] | null;
+          updated_at?: string;
+        };
+      };
+      questionnaire_responses: {
+        Row: {
+          id: string;
+          template_id: string;
+          patient_id: string;
+          practitioner_id: string;
+          responses: Record<string, unknown>;
+          submitted_at: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          template_id: string;
+          patient_id: string;
+          practitioner_id: string;
+          responses?: Record<string, unknown>;
+          submitted_at?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          responses?: Record<string, unknown>;
+          submitted_at?: string | null;
+        };
+      };
     };
-    Functions: Record<string, never>;
+    Functions: {
+      get_my_role: {
+        Args: Record<string, never>;
+        Returns: UserRole;
+      };
+      is_my_patient: {
+        Args: { p_patient_id: string };
+        Returns: boolean;
+      };
+    };
     Enums: {
       user_role: UserRole;
       appointment_type: AppointmentType;

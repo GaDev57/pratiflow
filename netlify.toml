@@ -1,5 +1,28 @@
 [build]
   command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "20"
+  NEXT_TELEMETRY_DISABLED = "1"
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
+
+# Security headers — all routes
+[[headers]]
+  for = "/*"
+  [headers.values]
+    X-Frame-Options = "DENY"
+    X-Content-Type-Options = "nosniff"
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=()"
+    Strict-Transport-Security = "max-age=31536000; includeSubDomains"
+    X-XSS-Protection = "1; mode=block"
+
+# Allow Jitsi iframe + camera/microphone for teleconsultation rooms
+[[headers]]
+  for = "/room/*"
+  [headers.values]
+    X-Frame-Options = "SAMEORIGIN"
+    Permissions-Policy = "camera=(self), microphone=(self)"

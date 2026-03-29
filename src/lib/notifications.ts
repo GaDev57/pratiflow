@@ -3,6 +3,8 @@
  * Gracefully degrade when API keys are not configured.
  */
 
+import { getAppUrl } from "@/lib/env";
+
 interface BookingNotification {
   patientEmail: string;
   patientPhone?: string;
@@ -26,7 +28,7 @@ export async function sendBookingConfirmationEmail(
   }
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "http://localhost:3000";
+    const appUrl = getAppUrl();
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -116,7 +118,7 @@ export async function sendReminderEmail(
   }
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "http://localhost:3000";
+    const appUrl = getAppUrl();
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {

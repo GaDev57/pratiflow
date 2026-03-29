@@ -2,7 +2,8 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { SignOutButton } from "@/components/sign-out-button";
-import { PushNotificationPrompt } from "@/components/push-notification-prompt";
+// TODO: Re-enable when web-push is configured with VAPID keys
+// import { PushNotificationPrompt } from "@/components/push-notification-prompt";
 
 export default async function DashboardLayout({
   children,
@@ -107,7 +108,7 @@ export default async function DashboardLayout({
       <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8">
         {children}
       </main>
-      <PushNotificationPrompt />
+      {/* TODO: Re-enable when web-push is configured with VAPID keys */}
     </div>
   );
 }

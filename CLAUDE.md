@@ -15,7 +15,7 @@ SaaS platform for health & wellness practitioners (psychologists, therapists, ph
 - **Email**: Resend
 - **Rich Text**: Tiptap
 - **UI**: Tailwind CSS v4 + shadcn/ui components
-- **Deployment**: Vercel (front) + Supabase Cloud EU
+- **Deployment**: Netlify (front) + Supabase Cloud EU
 
 ## Project Structure
 ```

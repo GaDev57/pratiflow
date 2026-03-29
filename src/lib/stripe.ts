@@ -1,14 +1,11 @@
 import Stripe from "stripe";
+import { env } from "@/lib/env";
 
 let stripeInstance: Stripe | null = null;
 
 export function getStripe(): Stripe {
   if (!stripeInstance) {
-    const key = process.env.STRIPE_SECRET_KEY;
-    if (!key) {
-      throw new Error("STRIPE_SECRET_KEY is not configured");
-    }
-    stripeInstance = new Stripe(key, {
+    stripeInstance = new Stripe(env.STRIPE_SECRET_KEY, {
       typescript: true,
     });
   }
@@ -29,7 +26,7 @@ export const SUBSCRIPTION_PLANS = {
   pro: {
     name: "Pro",
     price: 29,
-    priceId: process.env.STRIPE_PRO_PRICE_ID ?? "",
+    priceId: env.STRIPE_PRO_PRICE_ID ?? "",
     features: [
       "Rendez-vous illimités",
       "Téléconsultation Jitsi",
@@ -42,7 +39,7 @@ export const SUBSCRIPTION_PLANS = {
   premium: {
     name: "Premium",
     price: 59,
-    priceId: process.env.STRIPE_PREMIUM_PRICE_ID ?? "",
+    priceId: env.STRIPE_PREMIUM_PRICE_ID ?? "",
     features: [
       "Tout Pro +",
       "Paiement patient en ligne",
