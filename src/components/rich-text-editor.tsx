@@ -20,6 +20,7 @@ export function RichTextEditor({
   editable = true,
 }: Props) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [
       StarterKit,
       Underline,
@@ -136,6 +137,7 @@ function ToolbarButton({
  */
 export function RichTextViewer({ content }: { content: Record<string, unknown> }) {
   const editor = useEditor({
+    immediatelyRender: false,
     extensions: [StarterKit, Underline],
     content,
     editable: false,

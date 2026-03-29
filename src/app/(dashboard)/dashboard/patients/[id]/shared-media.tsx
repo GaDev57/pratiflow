@@ -50,7 +50,13 @@ export function SharedMediaSection({
     if (!user) return;
 
     for (const file of Array.from(files)) {
-      const filePath = `${practitionerId}/${patientId}/${Date.now()}-${file.name}`;
+      // Sanitize filename: remove accents, replace special chars with dashes
+      const safeName = file.name
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "")
+        .replace(/[^a-zA-Z0-9._-]/g, "-")
+        .replace(/-+/g, "-");
+      const filePath = `${practitionerId}/${patientId}/${Date.now()}-${safeName}`;
 
       // Upload to Supabase Storage
       const { error: uploadError } = await supabase.storage

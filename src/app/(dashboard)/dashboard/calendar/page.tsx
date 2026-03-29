@@ -13,7 +13,7 @@ export default async function CalendarPage() {
 
   const { data: practitioner } = await supabase
     .from("practitioners")
-    .select("id, timezone")
+    .select("id, timezone, session_durations")
     .eq("profile_id", user.id)
     .single();
 
@@ -32,12 +32,41 @@ export default async function CalendarPage() {
   const { data: appointments } = await supabase
     .from("appointments")
     .select(
-      "id, start_at, end_at, type, status, patients!inner(id, profiles!inner(full_name))"
+      "id, start_at, end_at, type, status, jitsi_room_url, patients!inner(id, profiles!inner(full_name))"
     )
     .eq("practitioner_id", practitioner.id)
     .gte("start_at", startOfWeek.toISOString())
     .lte("start_at", endOfWeek.toISOString())
     .order("start_at");
+
+  // Fetch patients for appointment creation modal
+  const { data: directPatients } = await supabase
+    .from("patients")
+    .select("id, profiles!inner(full_name)")
+    .eq("practitioner_id", practitioner.id);
+
+  // Also get patients from appointments (not directly linked)
+  const patientIds = new Set<string>();
+  const patientsList: { id: string; name: string }[] = [];
+
+  for (const dp of directPatients ?? []) {
+    const profile = dp.profiles as unknown as { full_name: string };
+    patientIds.add(dp.id);
+    patientsList.push({ id: dp.id, name: profile.full_name });
+  }
+
+  for (const apt of appointments ?? []) {
+    const patient = apt.patients as unknown as {
+      id: string;
+      profiles: { full_name: string };
+    };
+    if (!patientIds.has(patient.id)) {
+      patientIds.add(patient.id);
+      patientsList.push({ id: patient.id, name: patient.profiles.full_name });
+    }
+  }
+
+  patientsList.sort((a, b) => a.name.localeCompare(b.name));
 
   return (
     <div className="space-y-6">
@@ -51,6 +80,8 @@ export default async function CalendarPage() {
         appointments={appointments ?? []}
         practitionerId={practitioner.id}
         timezone={(practitioner.timezone as string) ?? "Europe/Paris"}
+        patients={patientsList}
+        sessionDurations={(practitioner.session_durations as number[]) ?? [30, 45, 60]}
       />
     </div>
   );

@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getBaseURL } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,12 +51,25 @@ export default function RegisterPage() {
           full_name: fullName,
           role,
         },
-        emailRedirectTo: `${window.location.origin}/auth/callback`,
+        emailRedirectTo: `${getBaseURL()}auth/callback`,
       },
     });
 
     if (error) {
-      setError(error.message);
+      const msg = error.message.toLowerCase();
+      if (msg.includes("already registered") || msg.includes("already been registered")) {
+        setError("Un compte existe déjà avec cet email. Essayez de vous connecter.");
+      } else if (msg.includes("password") && msg.includes("characters")) {
+        setError("Le mot de passe doit contenir au moins 8 caractères.");
+      } else if (msg.includes("valid email") || msg.includes("invalid email")) {
+        setError("Veuillez saisir une adresse email valide.");
+      } else if (msg.includes("rate limit") || msg.includes("too many")) {
+        setError("Trop de tentatives. Veuillez réessayer dans quelques minutes.");
+      } else if (msg.includes("redirect")) {
+        setError("Erreur de configuration. Veuillez contacter l'administrateur.");
+      } else {
+        setError(error.message);
+      }
       setLoading(false);
       return;
     }

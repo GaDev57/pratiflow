@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/lib/supabase/client";
+import { CreateAppointmentModal } from "./create-appointment-modal";
 
 interface Appointment {
   id: string;
@@ -14,10 +16,17 @@ interface Appointment {
   patients: Record<string, unknown>;
 }
 
+interface Patient {
+  id: string;
+  name: string;
+}
+
 interface Props {
   appointments: Record<string, unknown>[];
   practitionerId: string;
   timezone: string;
+  patients?: Patient[];
+  sessionDurations?: number[];
 }
 
 const STATUS_COLORS: Record<string, string> = {
@@ -36,11 +45,18 @@ const STATUS_LABELS: Record<string, string> = {
   no_show: "Absent",
 };
 
-export function CalendarView({ appointments, practitionerId, timezone }: Props) {
+export function CalendarView({
+  appointments,
+  practitionerId,
+  timezone,
+  patients = [],
+  sessionDurations = [30, 45, 60],
+}: Props) {
   const router = useRouter();
   const [weekOffset, setWeekOffset] = useState(0);
   const [loadedAppointments, setLoadedAppointments] =
     useState<Record<string, unknown>[]>(appointments);
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   // Calculate week dates
   const now = new Date();
@@ -69,7 +85,7 @@ export function CalendarView({ appointments, practitionerId, timezone }: Props) 
     const { data } = await supabase
       .from("appointments")
       .select(
-        "id, start_at, end_at, type, status, patients!inner(id, profiles!inner(full_name))"
+        "id, start_at, end_at, type, status, jitsi_room_url, patients!inner(id, profiles!inner(full_name))"
       )
       .eq("practitioner_id", practitionerId)
       .gte("start_at", newStart.toISOString())
@@ -103,16 +119,30 @@ export function CalendarView({ appointments, practitionerId, timezone }: Props) 
 
   return (
     <div className="space-y-4">
-      {/* Week navigation */}
+      {/* Week navigation + create button */}
       <div className="flex items-center justify-between">
         <Button variant="ghost" size="sm" onClick={() => changeWeek(-1)}>
           ← Semaine précédente
         </Button>
         <span className="text-sm font-medium">{weekLabel}</span>
-        <Button variant="ghost" size="sm" onClick={() => changeWeek(1)}>
-          Semaine suivante →
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button size="sm" onClick={() => setShowCreateModal(true)}>
+            + Nouveau RDV
+          </Button>
+          <Button variant="ghost" size="sm" onClick={() => changeWeek(1)}>
+            Semaine suivante →
+          </Button>
+        </div>
       </div>
+
+      {showCreateModal && (
+        <CreateAppointmentModal
+          practitionerId={practitionerId}
+          patients={patients}
+          sessionDurations={sessionDurations}
+          onClose={() => setShowCreateModal(false)}
+        />
+      )}
 
       {/* Days */}
       <div className="space-y-4">
@@ -166,9 +196,13 @@ export function CalendarView({ appointments, practitionerId, timezone }: Props) 
                         timeZone: timezone,
                       }
                     );
-                    const patients = apt.patients as Record<string, unknown> | undefined;
-                    const profiles = patients?.profiles as Record<string, unknown> | undefined;
+                    const aptPatients = apt.patients as Record<string, unknown> | undefined;
+                    const profiles = aptPatients?.profiles as Record<string, unknown> | undefined;
                     const patientName = (profiles?.full_name as string) ?? "Patient";
+                    const patientId = (aptPatients?.id as string) ?? "";
+                    const jitsiUrl = apt.jitsi_room_url as string | null;
+                    const isTeleconsultation = (apt.type as string) === "teleconsultation";
+                    const isConfirmed = (apt.status as string) === "confirmed";
 
                     return (
                       <div
@@ -179,9 +213,14 @@ export function CalendarView({ appointments, practitionerId, timezone }: Props) 
                           {startTime} - {endTime}
                         </div>
                         <div className="flex-1">
-                          <p className="text-sm font-medium">{patientName}</p>
+                          <Link
+                            href={`/dashboard/patients/${patientId}`}
+                            className="text-sm font-medium hover:underline"
+                          >
+                            {patientName}
+                          </Link>
                           <p className="text-xs text-muted-foreground">
-                            {(apt.type as string) === "teleconsultation"
+                            {isTeleconsultation
                               ? "Téléconsultation"
                               : "En cabinet"}
                           </p>
@@ -193,30 +232,41 @@ export function CalendarView({ appointments, practitionerId, timezone }: Props) 
                         >
                           {STATUS_LABELS[apt.status as string] ?? (apt.status as string)}
                         </span>
-                        {(apt.status as string) === "confirmed" && (
-                          <div className="flex gap-1">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs"
-                              onClick={() =>
-                                updateStatus(apt.id as string, "completed")
-                              }
+                        <div className="flex gap-1">
+                          {isTeleconsultation && jitsiUrl && isConfirmed && (
+                            <Link
+                              href={jitsiUrl}
+                              target="_blank"
+                              className="rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
                             >
-                              Terminer
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-xs text-destructive"
-                              onClick={() =>
-                                updateStatus(apt.id as string, "cancelled")
-                              }
-                            >
-                              Annuler
-                            </Button>
-                          </div>
-                        )}
+                              Rejoindre
+                            </Link>
+                          )}
+                          {isConfirmed && (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs"
+                                onClick={() =>
+                                  updateStatus(apt.id as string, "completed")
+                                }
+                              >
+                                Terminer
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-xs text-destructive"
+                                onClick={() =>
+                                  updateStatus(apt.id as string, "cancelled")
+                                }
+                              >
+                                Annuler
+                              </Button>
+                            </>
+                          )}
+                        </div>
                       </div>
                     );
                   })}

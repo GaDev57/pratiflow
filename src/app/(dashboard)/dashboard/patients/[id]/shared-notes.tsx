@@ -79,6 +79,13 @@ export function SharedNotesSection({
     router.refresh();
   }
 
+  async function deleteNote(noteId: string) {
+    const supabase = createClient();
+    await supabase.from("shared_notes").delete().eq("id", noteId);
+    setNotes(notes.filter((n) => n.id !== noteId));
+    router.refresh();
+  }
+
   return (
     <section className="space-y-3">
       <div className="flex items-center justify-between">
@@ -162,18 +169,28 @@ export function SharedNotesSection({
                         })
                       : "—"}
                   </span>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="h-auto py-0 text-xs"
-                    onClick={() =>
-                      toggleVisibility(note.id, note.is_visible_to_patient)
-                    }
-                  >
-                    {note.is_visible_to_patient
-                      ? "✓ Visible par le patient — Masquer"
-                      : "Masqué — Rendre visible"}
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto py-0 text-xs"
+                      onClick={() =>
+                        toggleVisibility(note.id, note.is_visible_to_patient)
+                      }
+                    >
+                      {note.is_visible_to_patient
+                        ? "✓ Visible — Masquer"
+                        : "Masqué — Rendre visible"}
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="h-auto py-0 text-xs text-destructive"
+                      onClick={() => deleteNote(note.id)}
+                    >
+                      Suppr.
+                    </Button>
+                  </div>
                 </div>
                 <RichTextViewer content={note.content_json} />
               </div>

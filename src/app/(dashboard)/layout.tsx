@@ -49,6 +49,12 @@ export default async function DashboardLayout({
                     Patients
                   </Link>
                   <Link
+                    href="/dashboard/templates"
+                    className="text-sm text-muted-foreground hover:text-foreground"
+                  >
+                    Modèles
+                  </Link>
+                  <Link
                     href="/dashboard/settings"
                     className="text-sm text-muted-foreground hover:text-foreground"
                   >

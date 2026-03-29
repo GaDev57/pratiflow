@@ -26,7 +26,7 @@ export async function sendBookingConfirmationEmail(
   }
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "http://localhost:3000";
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -116,7 +116,7 @@ export async function sendReminderEmail(
   }
 
   try {
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const appUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "http://localhost:3000";
     const res = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {

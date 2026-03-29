@@ -83,7 +83,7 @@ export function BookingWidget({
     setAvailableDates(dates);
   }, [currentMonth, rules, exceptions]);
 
-  // Fetch slots when date is selected
+  // Fetch slots when date is selected (including Google Calendar busy periods)
   useEffect(() => {
     if (!selectedDate) return;
 
@@ -92,22 +92,48 @@ export function BookingWidget({
       const dayStart = selectedDate + "T00:00:00";
       const dayEnd = selectedDate + "T23:59:59";
 
-      const { data: appointments } = await supabase
-        .from("appointments")
-        .select("start_at, end_at, status")
-        .eq("practitioner_id", practitionerId)
-        .gte("start_at", dayStart)
-        .lte("start_at", dayEnd)
-        .neq("status", "cancelled");
+      // Fetch existing appointments and Google Calendar busy periods in parallel
+      const [appointmentsRes, gcalRes] = await Promise.all([
+        supabase
+          .from("appointments")
+          .select("start_at, end_at, status")
+          .eq("practitioner_id", practitionerId)
+          .gte("start_at", dayStart)
+          .lte("start_at", dayEnd)
+          .neq("status", "cancelled"),
+        fetch(
+          `/api/google-calendar/busy?practitionerId=${practitionerId}&date=${selectedDate}`
+        ).then((r) => r.json()).catch(() => ({ busyPeriods: [] })),
+      ]);
 
-      const available = getAvailableSlots(
+      let available = getAvailableSlots(
         selectedDate!,
         duration,
         rules,
         exceptions,
-        (appointments as ExistingAppointment[]) ?? [],
+        (appointmentsRes.data as ExistingAppointment[]) ?? [],
         timezone
       );
+
+      // Filter out slots that overlap with Google Calendar busy periods
+      const busyPeriods = (gcalRes.busyPeriods ?? []) as {
+        start: number;
+        end: number;
+      }[];
+      if (busyPeriods.length > 0) {
+        available = available.filter((slot) => {
+          const slotStartMin =
+            parseInt(slot.start.substring(11, 13)) * 60 +
+            parseInt(slot.start.substring(14, 16));
+          const slotEndMin =
+            parseInt(slot.end.substring(11, 13)) * 60 +
+            parseInt(slot.end.substring(14, 16));
+          return !busyPeriods.some(
+            (bp) => slotStartMin < bp.end && slotEndMin > bp.start
+          );
+        });
+      }
+
       setSlots(available);
     }
 
@@ -171,11 +197,12 @@ export function BookingWidget({
       return;
     }
 
-    // Trigger server-side notifications
+    // Trigger server-side notifications + Google Calendar sync
     await fetch("/api/booking/confirm", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
+        practitionerId,
         patientEmail: patientEmail || user.email,
         patientPhone,
         patientName: patientName || user.user_metadata?.full_name,
@@ -190,6 +217,8 @@ export function BookingWidget({
           hour: "2-digit",
           minute: "2-digit",
         }),
+        startDateTime: selectedSlot.start,
+        endDateTime: selectedSlot.end,
         duration,
         type,
       }),

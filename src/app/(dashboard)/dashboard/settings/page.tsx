@@ -3,6 +3,8 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { AvailabilityManager } from "./availability-manager";
 import { SubscriptionManager } from "./subscription-manager";
+import { GoogleCalendarSection } from "./google-calendar-section";
+import { PublicPageEditor } from "./public-page-editor";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -51,14 +53,26 @@ export default async function SettingsPage() {
         <div className="rounded-lg border p-4 text-sm text-muted-foreground">
           <p>
             Votre page de réservation :{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5">
+            <Link
+              href={`/book/${practitioner.slug}`}
+              className="rounded bg-muted px-1.5 py-0.5 font-mono hover:underline"
+            >
               /book/{practitioner.slug}
-            </code>
+            </Link>
           </p>
           <p className="mt-1">
             Spécialité : {practitioner.specialty} — Tarif : {practitioner.consultation_price}€
           </p>
         </div>
+        <PublicPageEditor
+          practitionerId={practitioner.id as string}
+          initialBio={(practitioner.bio as string) ?? ""}
+          initialAddress={(practitioner.address as string) ?? ""}
+          initialServices={
+            ((practitioner.services as { title: string; description: string }[]) ?? [])
+          }
+          initialHeroImage={(practitioner.hero_image_url as string) ?? ""}
+        />
       </section>
 
       <section className="space-y-4">
@@ -72,25 +86,10 @@ export default async function SettingsPage() {
 
       <section className="space-y-4">
         <h2 className="text-lg font-semibold">Google Calendar</h2>
-        <div className="rounded-lg border p-4">
-          {practitioner.google_calendar_token ? (
-            <p className="text-sm text-green-600">
-              ✓ Google Calendar connecté
-            </p>
-          ) : (
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-muted-foreground">
-                Synchronisez vos indisponibilités depuis Google Calendar
-              </p>
-              <Link
-                href="/api/google-calendar/authorize"
-                className="rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-primary-foreground"
-              >
-                Connecter
-              </Link>
-            </div>
-          )}
-        </div>
+        <GoogleCalendarSection
+          isConnected={!!practitioner.google_calendar_token}
+          practitionerId={practitioner.id}
+        />
       </section>
 
       <section className="space-y-4">

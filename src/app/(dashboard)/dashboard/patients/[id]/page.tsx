@@ -5,6 +5,8 @@ import { PrivateNotesSection } from "./private-notes";
 import { SharedNotesSection } from "./shared-notes";
 import { SharedMediaSection } from "./shared-media";
 import { MessagingSection } from "./messaging";
+import { SendDocumentButton } from "./send-document-button";
+import { SentDocumentsSection } from "./sent-documents";
 
 interface Props {
   params: Promise<{ id: string }>;
@@ -82,6 +84,14 @@ export default async function PatientDetailPage({ params }: Props) {
     .eq("patient_id", patientId)
     .order("created_at", { ascending: false });
 
+  // Fetch sent questionnaires with responses and field definitions
+  const { data: sentQuestionnaires } = await supabase
+    .from("questionnaire_responses")
+    .select("id, responses, submitted_at, created_at, document_templates!inner(title, template_type, questionnaire_fields)")
+    .eq("practitioner_id", practitioner.id)
+    .eq("patient_id", patientId)
+    .order("created_at", { ascending: false });
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -106,8 +116,14 @@ export default async function PatientDetailPage({ params }: Props) {
             )}
           </div>
         </div>
-        <div className="text-right text-sm text-muted-foreground">
-          <p>{(appointments ?? []).length} séance(s)</p>
+        <div className="flex items-center gap-3">
+          <SendDocumentButton
+            practitionerId={practitioner.id as string}
+            patientId={patientId}
+          />
+          <div className="text-right text-sm text-muted-foreground">
+            <p>{(appointments ?? []).length} séance(s)</p>
+          </div>
         </div>
       </div>
 
@@ -194,6 +210,29 @@ export default async function PatientDetailPage({ params }: Props) {
             is_visible_to_patient: boolean;
             created_at: string;
           }[]
+        }
+      />
+
+      {/* Sent documents (questionnaires) */}
+      <SentDocumentsSection
+        sentQuestionnaires={
+          ((sentQuestionnaires ?? []) as unknown as {
+            id: string;
+            responses: Record<string, string | string[] | number | boolean>;
+            submitted_at: string | null;
+            created_at: string;
+            document_templates: {
+              title: string;
+              template_type: string;
+              questionnaire_fields: {
+                id: string;
+                type: string;
+                label: string;
+                required: boolean;
+                options?: string[];
+              }[];
+            };
+          }[])
         }
       />
 

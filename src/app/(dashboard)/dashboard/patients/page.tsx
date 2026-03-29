@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
+import { PatientsHeader } from "./patients-header";
 
 export default async function PatientsPage() {
   const supabase = await createClient();
@@ -19,7 +20,13 @@ export default async function PatientsPage() {
 
   if (!practitioner) redirect("/onboarding");
 
-  // Get patients linked to this practitioner via appointments
+  // Get patients directly linked to this practitioner
+  const { data: directPatients } = await supabase
+    .from("patients")
+    .select("id, profile_id, date_of_birth, profiles!inner(full_name, phone)")
+    .eq("practitioner_id", practitioner.id);
+
+  // Get patients linked via appointments
   const { data: appointments } = await supabase
     .from("appointments")
     .select(
@@ -28,18 +35,31 @@ export default async function PatientsPage() {
     .eq("practitioner_id", practitioner.id)
     .order("start_at", { ascending: false });
 
-  // Deduplicate patients and get latest appointment info
+  // Build patients map: merge direct patients + appointment-based patients
   const patientsMap = new Map<
     string,
     {
       patientId: string;
       name: string;
       phone: string | null;
-      lastAppointment: string;
+      lastAppointment: string | null;
       totalAppointments: number;
     }
   >();
 
+  // Add directly linked patients first
+  for (const dp of directPatients ?? []) {
+    const profile = dp.profiles as unknown as { full_name: string; phone: string | null };
+    patientsMap.set(dp.id, {
+      patientId: dp.id,
+      name: profile.full_name,
+      phone: profile.phone,
+      lastAppointment: null,
+      totalAppointments: 0,
+    });
+  }
+
+  // Merge appointment data
   for (const apt of appointments ?? []) {
     const patient = apt.patients as unknown as {
       id: string;
@@ -49,6 +69,9 @@ export default async function PatientsPage() {
     const existing = patientsMap.get(patient.id);
     if (existing) {
       existing.totalAppointments++;
+      if (!existing.lastAppointment) {
+        existing.lastAppointment = apt.start_at as string;
+      }
     } else {
       patientsMap.set(patient.id, {
         patientId: patient.id,
@@ -64,18 +87,13 @@ export default async function PatientsPage() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold">Patients</h1>
-        <p className="text-muted-foreground">
-          {patients.length} patient{patients.length !== 1 ? "s" : ""}
-        </p>
-      </div>
+      <PatientsHeader count={patients.length} />
 
       {patients.length === 0 ? (
         <div className="rounded-lg border p-8 text-center">
           <p className="text-muted-foreground">
-            Aucun patient pour le moment. Vos patients apparaîtront ici
-            après leur premier rendez-vous.
+            Aucun patient pour le moment. Cliquez sur &quot;+ Nouveau patient&quot;
+            pour créer votre première fiche patient.
           </p>
         </div>
       ) : (
@@ -97,11 +115,13 @@ export default async function PatientsPage() {
                 {patient.phone || "—"}
               </div>
               <div className="text-muted-foreground">
-                {new Date(patient.lastAppointment).toLocaleDateString("fr-FR", {
-                  day: "numeric",
-                  month: "short",
-                  year: "numeric",
-                })}
+                {patient.lastAppointment
+                  ? new Date(patient.lastAppointment).toLocaleDateString("fr-FR", {
+                      day: "numeric",
+                      month: "short",
+                      year: "numeric",
+                    })
+                  : "Aucun"}
               </div>
               <div className="text-muted-foreground">
                 {patient.totalAppointments}
