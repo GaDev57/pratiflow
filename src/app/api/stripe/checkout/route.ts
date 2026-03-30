@@ -24,6 +24,12 @@ export async function POST(request: Request) {
     } = await request.json();
 
     const stripe = getStripe();
+    if (!stripe) {
+      return NextResponse.json(
+        { error: "Les paiements ne sont pas encore configurés" },
+        { status: 503 }
+      );
+    }
     const appUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "http://localhost:3000");
 
     const session = await stripe.checkout.sessions.create({

@@ -3,7 +3,11 @@ import { env } from "@/lib/env";
 
 let stripeInstance: Stripe | null = null;
 
-export function getStripe(): Stripe {
+export function getStripe(): Stripe | null {
+  if (!env.STRIPE_SECRET_KEY) {
+    console.warn("[STRIPE] STRIPE_SECRET_KEY not configured — Stripe disabled");
+    return null;
+  }
   if (!stripeInstance) {
     stripeInstance = new Stripe(env.STRIPE_SECRET_KEY, {
       typescript: true,

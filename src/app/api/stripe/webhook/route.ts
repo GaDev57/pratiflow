@@ -18,16 +18,16 @@ export async function POST(request: Request) {
   const sig = headersList.get("stripe-signature");
 
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
-  if (!sig || !webhookSecret) {
+  const stripe = getStripe();
+  if (!sig || !webhookSecret || !stripe) {
     return NextResponse.json(
-      { error: "Missing signature or webhook secret" },
-      { status: 400 }
+      { error: "Stripe not configured" },
+      { status: 503 }
     );
   }
 
   let event: Stripe.Event;
   try {
-    const stripe = getStripe();
     event = stripe.webhooks.constructEvent(body, sig, webhookSecret);
   } catch (err) {
     console.error("[STRIPE/WEBHOOK] Signature verification failed:", err);

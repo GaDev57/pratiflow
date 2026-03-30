@@ -19,8 +19,8 @@ function optional(name: string): string | undefined {
 export const env = {
   // Required for core functionality — validated lazily on first access
   get SUPABASE_SERVICE_ROLE_KEY() { return required("SUPABASE_SERVICE_ROLE_KEY"); },
-  get STRIPE_SECRET_KEY() { return required("STRIPE_SECRET_KEY"); },
-  get STRIPE_WEBHOOK_SECRET() { return required("STRIPE_WEBHOOK_SECRET"); },
+  get STRIPE_SECRET_KEY() { return optional("STRIPE_SECRET_KEY"); },
+  get STRIPE_WEBHOOK_SECRET() { return optional("STRIPE_WEBHOOK_SECRET"); },
 
   // Site URL
   get NEXT_PUBLIC_SITE_URL() { return optional("NEXT_PUBLIC_SITE_URL"); },

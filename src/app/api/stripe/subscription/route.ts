@@ -31,6 +31,12 @@ export async function POST(request: Request) {
     }
 
     const stripe = getStripe();
+    if (!stripe) {
+      return NextResponse.json(
+        { error: "Les abonnements ne sont pas encore configurés" },
+        { status: 503 }
+      );
+    }
     const appUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.NEXT_PUBLIC_VERCEL_URL ? `https://${process.env.NEXT_PUBLIC_VERCEL_URL}` : "http://localhost:3000");
 
     // Get or create Stripe customer
