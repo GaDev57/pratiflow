@@ -85,7 +85,7 @@ export function CalendarView({
     const { data } = await supabase
       .from("appointments")
       .select(
-        "id, start_at, end_at, type, status, jitsi_room_url, patients!inner(id, profiles!inner(full_name))"
+        "id, start_at, end_at, type, status, jitsi_room_url, patients!inner(id, full_name, profiles(full_name))"
       )
       .eq("practitioner_id", practitionerId)
       .gte("start_at", newStart.toISOString())
@@ -197,8 +197,9 @@ export function CalendarView({
                       }
                     );
                     const aptPatients = apt.patients as Record<string, unknown> | undefined;
-                    const profiles = aptPatients?.profiles as Record<string, unknown> | undefined;
-                    const patientName = (profiles?.full_name as string) ?? "Patient";
+                    const profiles = Array.isArray(aptPatients?.profiles) ? aptPatients.profiles[0] : aptPatients?.profiles;
+                    const prof = profiles as Record<string, unknown> | undefined;
+                    const patientName = (aptPatients?.full_name as string) || (prof?.full_name as string) || "Patient";
                     const patientId = (aptPatients?.id as string) ?? "";
                     const jitsiUrl = apt.jitsi_room_url as string | null;
                     const isTeleconsultation = (apt.type as string) === "teleconsultation";

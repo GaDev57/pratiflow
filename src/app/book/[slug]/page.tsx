@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BookingWidget } from "./booking-widget";
+import { getTheme } from "@/lib/booking-themes";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -47,6 +48,8 @@ export default async function BookingPage({ params }: Props) {
   const address = practitioner.address as string | null;
   const heroImage = practitioner.hero_image_url as string | null;
   const sessionDurations = practitioner.session_durations as number[];
+  const logoUrl = practitioner.logo_url as string | null;
+  const theme = getTheme((practitioner.booking_theme as string) ?? "default");
 
   return (
     <div className="min-h-screen bg-background">
@@ -56,18 +59,24 @@ export default async function BookingPage({ params }: Props) {
         style={{
           backgroundImage: heroImage
             ? `url(${heroImage})`
-            : "linear-gradient(135deg, #667260 0%, #8B9D83 50%, #A3B18A 100%)",
+            : theme.gradient,
         }}
       >
         <div className="absolute inset-0 bg-black/40" />
         <div className="relative z-10 text-center text-white">
-          {profile.avatar_url && (
+          {logoUrl ? (
+            <img
+              src={logoUrl}
+              alt={`Logo ${profile.full_name}`}
+              className="mx-auto mb-6 h-28 w-28 rounded-full border-4 border-white/80 bg-white/20 object-contain p-2 shadow-lg"
+            />
+          ) : profile.avatar_url ? (
             <img
               src={profile.avatar_url}
               alt={profile.full_name}
               className="mx-auto mb-6 h-32 w-32 rounded-full border-4 border-white/80 object-cover shadow-lg"
             />
-          )}
+          ) : null}
           <h1 className="text-4xl font-bold tracking-tight sm:text-5xl">
             {profile.full_name}
           </h1>
@@ -76,7 +85,8 @@ export default async function BookingPage({ params }: Props) {
           </p>
           <a
             href="#booking"
-            className="mt-6 inline-block rounded-full bg-white/90 px-8 py-3 text-sm font-semibold text-gray-900 shadow-md transition hover:bg-white"
+            className="mt-6 inline-block rounded-full px-8 py-3 text-sm font-semibold shadow-md transition"
+            style={{ backgroundColor: "rgba(255,255,255,0.9)", color: theme.primary }}
           >
             Prendre rendez-vous
           </a>
@@ -181,13 +191,16 @@ export default async function BookingPage({ params }: Props) {
       </div>
 
       {/* Footer */}
-      <footer className="border-t bg-muted/30 py-8 text-center text-sm text-muted-foreground">
-        <p>
+      <footer
+        className="py-8 text-center text-sm text-white/80"
+        style={{ background: theme.gradient }}
+      >
+        <p className="font-medium text-white">
           {profile.full_name} — {practitioner.specialty}
         </p>
         <p className="mt-1">
           Propulsé par{" "}
-          <span className="font-medium text-foreground">PratiFlow</span>
+          <span className="font-semibold text-white">PratiFlow</span>
         </p>
       </footer>
     </div>

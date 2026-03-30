@@ -20,7 +20,7 @@ export default async function RoomPage({ params }: Props) {
   const { data: appointment } = await supabase
     .from("appointments")
     .select(
-      "id, start_at, end_at, status, type, practitioner_id, patient_id, practitioners!inner(profile_id, profiles!inner(full_name)), patients!inner(profile_id, profiles!inner(full_name))"
+      "id, start_at, end_at, status, type, practitioner_id, patient_id, practitioners!inner(profile_id, profiles!inner(full_name)), patients(id, profile_id, full_name, profiles(full_name))"
     )
     .or(`jitsi_room_url.eq./room/${id},jitsi_room_url.eq.${id}`)
     .single();
@@ -43,13 +43,16 @@ export default async function RoomPage({ params }: Props) {
     profile_id: string;
     profiles: { full_name: string };
   };
-  const patient = appointment.patients as unknown as {
-    profile_id: string;
-    profiles: { full_name: string };
+  const patientData = appointment.patients as unknown as {
+    id: string;
+    profile_id: string | null;
+    full_name: string | null;
+    profiles: { full_name: string } | null;
   };
+  const patientName = patientData.full_name || patientData.profiles?.full_name || "Patient";
 
   const isPractitioner = practitioner.profile_id === user.id;
-  const isPatient = patient.profile_id === user.id;
+  const isPatient = patientData.profile_id === user.id;
 
   if (!isPractitioner && !isPatient) {
     return (
@@ -112,7 +115,7 @@ export default async function RoomPage({ params }: Props) {
 
   const displayName = isPractitioner
     ? practitioner.profiles.full_name
-    : patient.profiles.full_name;
+    : patientName;
 
   return (
     <JitsiRoom
@@ -120,7 +123,7 @@ export default async function RoomPage({ params }: Props) {
       displayName={displayName}
       appointmentId={appointment.id as string}
       isPractitioner={isPractitioner}
-      patientName={patient.profiles.full_name}
+      patientName={patientName}
       practitionerName={practitioner.profiles.full_name}
     />
   );

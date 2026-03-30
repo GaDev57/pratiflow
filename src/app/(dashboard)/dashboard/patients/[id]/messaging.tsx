@@ -17,12 +17,14 @@ interface Props {
   currentUserId: string;
   patientId: string;
   patientName: string;
+  hasAuthAccount?: boolean;
 }
 
 export function MessagingSection({
   currentUserId,
   patientId,
   patientName,
+  hasAuthAccount = true,
 }: Props) {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
@@ -120,6 +122,17 @@ export function MessagingSection({
 
     setNewMessage("");
     setSending(false);
+  }
+
+  if (!hasAuthAccount) {
+    return (
+      <section className="space-y-3">
+        <h2 className="text-lg font-semibold">Messagerie</h2>
+        <p className="text-sm text-muted-foreground">
+          La messagerie n&apos;est pas disponible pour les patients sans compte. Le patient doit créer un compte pour échanger des messages.
+        </p>
+      </section>
+    );
   }
 
   return (

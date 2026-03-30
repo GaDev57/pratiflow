@@ -141,58 +141,28 @@ export function BookingWidget({
   }, [selectedDate, duration, practitionerId, rules, exceptions, timezone]);
 
   async function handleBook() {
-    if (!selectedSlot) return;
+    if (!selectedSlot || !patientName || !patientEmail) return;
     setLoading(true);
     setError(null);
 
-    const supabase = createClient();
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (!user) {
-      // Redirect to login with return URL
-      router.push(
-        `/login?redirect=${encodeURIComponent(window.location.pathname)}`
-      );
-      return;
-    }
-
-    // Get patient record
-    const { data: patient } = await supabase
-      .from("patients")
-      .select("id")
-      .eq("profile_id", user.id)
-      .single();
-
-    if (!patient) {
-      setError("Vous devez compléter votre profil patient avant de réserver.");
-      setLoading(false);
-      return;
-    }
-
-    // Create appointment
-    const jitsiRoom =
-      type === "teleconsultation"
-        ? `pratiflow-${crypto.randomUUID().substring(0, 8)}`
-        : null;
-
-    const { error: insertError } = await supabase
-      .from("appointments")
-      .insert({
-        practitioner_id: practitionerId,
-        patient_id: patient.id,
-        start_at: selectedSlot.start,
-        end_at: selectedSlot.end,
+    // Create patient + appointment via server API (no auth required)
+    const res = await fetch("/api/booking/create", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        practitionerId,
+        patientName,
+        patientEmail,
+        patientPhone,
+        startAt: selectedSlot.start,
+        endAt: selectedSlot.end,
         type,
-        status: "confirmed",
-        jitsi_room_url: jitsiRoom
-          ? `/room/${jitsiRoom}`
-          : null,
-      });
+      }),
+    });
 
-    if (insertError) {
-      setError("Erreur lors de la réservation. Veuillez réessayer.");
+    if (!res.ok) {
+      const data = await res.json();
+      setError(data.error || "Erreur lors de la réservation. Veuillez réessayer.");
       setLoading(false);
       return;
     }
@@ -203,9 +173,9 @@ export function BookingWidget({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         practitionerId,
-        patientEmail: patientEmail || user.email,
+        patientEmail,
         patientPhone,
-        patientName: patientName || user.user_metadata?.full_name,
+        patientName,
         practitionerName,
         date: new Date(selectedSlot.start).toLocaleDateString("fr-FR", {
           weekday: "long",

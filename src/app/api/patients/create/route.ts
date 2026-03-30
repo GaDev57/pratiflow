@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { randomUUID } from "crypto";
 
 export async function POST(request: Request) {
   const supabase = await createClient();
@@ -36,30 +35,14 @@ export async function POST(request: Request) {
     );
   }
 
-  // Create a managed patient profile (no auth.users entry — practitioner-managed)
-  const profileId = randomUUID();
-
-  const { error: profileError } = await supabase.from("profiles").insert({
-    id: profileId,
-    role: "patient",
-    full_name: fullName.trim(),
-    phone: phone || null,
-  });
-
-  if (profileError) {
-    console.error("[PATIENTS/CREATE] Profile insert error:", profileError.message);
-    return NextResponse.json(
-      { error: "Erreur lors de la création du profil : " + profileError.message },
-      { status: 500 }
-    );
-  }
-
-  // Create the patient record linked to the practitioner
+  // Create a managed patient (no auth account needed)
   const { data: patient, error: patientError } = await supabase
     .from("patients")
     .insert({
-      profile_id: profileId,
       practitioner_id: practitioner.id,
+      full_name: fullName.trim(),
+      email: email || null,
+      phone: phone || null,
       date_of_birth: dateOfBirth || null,
     })
     .select("id")
@@ -75,7 +58,6 @@ export async function POST(request: Request) {
 
   return NextResponse.json({
     patientId: patient.id,
-    profileId: profileId,
     fullName: fullName.trim(),
   });
 }

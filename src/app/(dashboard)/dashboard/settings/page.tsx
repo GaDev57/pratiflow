@@ -5,6 +5,7 @@ import { AvailabilityManager } from "./availability-manager";
 import { SubscriptionManager } from "./subscription-manager";
 import { GoogleCalendarSection } from "./google-calendar-section";
 import { PublicPageEditor } from "./public-page-editor";
+import { BookingBranding } from "./booking-branding";
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -53,12 +54,14 @@ export default async function SettingsPage() {
         <div className="rounded-lg border p-4 text-sm text-muted-foreground">
           <p>
             Votre page de réservation :{" "}
-            <Link
+            <a
               href={`/book/${practitioner.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
               className="rounded bg-muted px-1.5 py-0.5 font-mono hover:underline"
             >
-              /book/{practitioner.slug}
-            </Link>
+              /book/{practitioner.slug} ↗
+            </a>
           </p>
           <p className="mt-1">
             Spécialité : {practitioner.specialty} — Tarif : {practitioner.consultation_price}€
@@ -72,6 +75,15 @@ export default async function SettingsPage() {
             ((practitioner.services as { title: string; description: string }[]) ?? [])
           }
           initialHeroImage={(practitioner.hero_image_url as string) ?? ""}
+        />
+      </section>
+
+      <section className="space-y-4">
+        <h2 className="text-lg font-semibold">Personnalisation de la page de réservation</h2>
+        <BookingBranding
+          practitionerId={practitioner.id as string}
+          initialTheme={(practitioner.booking_theme as string) ?? "default"}
+          initialLogoUrl={(practitioner.logo_url as string) ?? ""}
         />
       </section>
 

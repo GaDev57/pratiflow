@@ -32,19 +32,26 @@ export default async function PatientDetailPage({ params }: Props) {
 
   if (!practitioner) redirect("/onboarding");
 
-  // Fetch patient with profile
+  // Fetch patient (with optional profile for auth-linked patients)
   const { data: patient } = await supabase
     .from("patients")
-    .select("id, date_of_birth, profiles!inner(full_name, phone, avatar_url)")
+    .select("id, profile_id, date_of_birth, full_name, phone, profiles(full_name, phone, avatar_url)")
     .eq("id", patientId)
     .single();
 
   if (!patient) notFound();
 
-  const profile = patient.profiles as unknown as {
+  // Support both managed patients (fields on patients) and auth-linked (via profiles)
+  const linkedProfile = patient.profiles as unknown as {
     full_name: string;
     phone: string | null;
     avatar_url: string | null;
+  } | null;
+
+  const profile = {
+    full_name: (patient.full_name as string) || linkedProfile?.full_name || "Sans nom",
+    phone: (patient.phone as string) || linkedProfile?.phone || null,
+    avatar_url: linkedProfile?.avatar_url || null,
   };
 
   // Fetch appointments for this patient with this practitioner
@@ -258,6 +265,7 @@ export default async function PatientDetailPage({ params }: Props) {
         currentUserId={user.id}
         patientId={patientId}
         patientName={profile.full_name}
+        hasAuthAccount={!!patient.profile_id}
       />
     </div>
   );

@@ -119,3 +119,11 @@ npm run lint      # ESLint
 - Access logs viewer at `/dashboard/access-logs`
 - Storage: signed URLs only (1h expiry), encrypted at rest (AES-256), TLS 1.3 in transit
 - RLS on all 11 tables + storage bucket policies
+
+## Règle de vérification
+
+Après CHAQUE modification (code, DB, API), vérifier que ça fonctionne AVANT de passer à la suite :
+1. Code modifié → `npm run build` doit passer
+2. Migration DB → requête SQL de vérification
+3. Fix API → tester l'endpoint
+Ne jamais enchaîner plusieurs modifications sans vérification intermédiaire.

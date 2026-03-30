@@ -21,16 +21,17 @@ export default async function PatientsPage() {
   if (!practitioner) redirect("/onboarding");
 
   // Get patients directly linked to this practitioner
+  // Use left join (profiles) to include managed patients without auth accounts
   const { data: directPatients } = await supabase
     .from("patients")
-    .select("id, profile_id, date_of_birth, profiles!inner(full_name, phone)")
+    .select("id, profile_id, full_name, phone, date_of_birth, profiles(full_name, phone)")
     .eq("practitioner_id", practitioner.id);
 
   // Get patients linked via appointments
   const { data: appointments } = await supabase
     .from("appointments")
     .select(
-      "patient_id, start_at, status, patients!inner(id, profile_id, profiles!inner(full_name, phone))"
+      "patient_id, start_at, status, patients!inner(id, profile_id, full_name, phone, profiles(full_name, phone))"
     )
     .eq("practitioner_id", practitioner.id)
     .order("start_at", { ascending: false });
@@ -47,13 +48,23 @@ export default async function PatientsPage() {
     }
   >();
 
+  // Helper: get name/phone from patient row (managed or profile-linked)
+  function getPatientInfo(p: { full_name?: unknown; phone?: unknown; profiles?: unknown }) {
+    const profile = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+    const prof = profile as { full_name: string; phone: string | null } | null | undefined;
+    return {
+      name: (p.full_name as string) || prof?.full_name || "Sans nom",
+      phone: (p.phone as string) || prof?.phone || null,
+    };
+  }
+
   // Add directly linked patients first
   for (const dp of directPatients ?? []) {
-    const profile = dp.profiles as unknown as { full_name: string; phone: string | null };
+    const info = getPatientInfo(dp);
     patientsMap.set(dp.id, {
       patientId: dp.id,
-      name: profile.full_name,
-      phone: profile.phone,
+      name: info.name,
+      phone: info.phone,
       lastAppointment: null,
       totalAppointments: 0,
     });
@@ -63,8 +74,10 @@ export default async function PatientsPage() {
   for (const apt of appointments ?? []) {
     const patient = apt.patients as unknown as {
       id: string;
-      profile_id: string;
-      profiles: { full_name: string; phone: string | null };
+      profile_id: string | null;
+      full_name?: string | null;
+      phone?: string | null;
+      profiles?: { full_name: string; phone: string | null } | null;
     };
     const existing = patientsMap.get(patient.id);
     if (existing) {
@@ -73,10 +86,11 @@ export default async function PatientsPage() {
         existing.lastAppointment = apt.start_at as string;
       }
     } else {
+      const info = getPatientInfo(patient);
       patientsMap.set(patient.id, {
         patientId: patient.id,
-        name: patient.profiles.full_name,
-        phone: patient.profiles.phone,
+        name: info.name,
+        phone: info.phone,
         lastAppointment: apt.start_at as string,
         totalAppointments: 1,
       });

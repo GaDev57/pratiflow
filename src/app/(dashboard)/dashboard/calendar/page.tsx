@@ -32,7 +32,7 @@ export default async function CalendarPage() {
   const { data: appointments } = await supabase
     .from("appointments")
     .select(
-      "id, start_at, end_at, type, status, jitsi_room_url, patients!inner(id, profiles!inner(full_name))"
+      "id, start_at, end_at, type, status, jitsi_room_url, patients!inner(id, full_name, profiles(full_name))"
     )
     .eq("practitioner_id", practitioner.id)
     .gte("start_at", startOfWeek.toISOString())
@@ -42,27 +42,33 @@ export default async function CalendarPage() {
   // Fetch patients for appointment creation modal
   const { data: directPatients } = await supabase
     .from("patients")
-    .select("id, profiles!inner(full_name)")
+    .select("id, full_name, profiles(full_name)")
     .eq("practitioner_id", practitioner.id);
+
+  // Helper: resolve patient name (managed or profile-linked)
+  function getPatientName(p: { full_name?: unknown; profiles?: unknown }): string {
+    const prof = Array.isArray(p.profiles) ? p.profiles[0] : p.profiles;
+    return (p.full_name as string) || (prof as { full_name: string } | null)?.full_name || "Sans nom";
+  }
 
   // Also get patients from appointments (not directly linked)
   const patientIds = new Set<string>();
   const patientsList: { id: string; name: string }[] = [];
 
   for (const dp of directPatients ?? []) {
-    const profile = dp.profiles as unknown as { full_name: string };
     patientIds.add(dp.id);
-    patientsList.push({ id: dp.id, name: profile.full_name });
+    patientsList.push({ id: dp.id, name: getPatientName(dp) });
   }
 
   for (const apt of appointments ?? []) {
     const patient = apt.patients as unknown as {
       id: string;
-      profiles: { full_name: string };
+      full_name?: string | null;
+      profiles?: { full_name: string } | null;
     };
     if (!patientIds.has(patient.id)) {
       patientIds.add(patient.id);
-      patientsList.push({ id: patient.id, name: patient.profiles.full_name });
+      patientsList.push({ id: patient.id, name: getPatientName(patient) });
     }
   }
 

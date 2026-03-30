@@ -41,7 +41,7 @@ async function PractitionerDashboard({
   const today = new Date().toISOString().substring(0, 10);
   const { data: todayApts, count: todayCount } = await supabase
     .from("appointments")
-    .select("id, start_at, end_at, type, status, patients!inner(profiles!inner(full_name))", {
+    .select("id, start_at, end_at, type, status, patients(full_name, profiles(full_name))", {
       count: "exact",
     })
     .eq("practitioner_id", practitioner.id)
@@ -90,9 +90,14 @@ async function PractitionerDashboard({
           <h1 className="text-2xl font-bold">Bonjour, {fullName}</h1>
           <p className="text-muted-foreground">
             Votre page de réservation :{" "}
-            <code className="rounded bg-muted px-1.5 py-0.5 text-xs">
-              /book/{practitioner.slug}
-            </code>
+            <a
+              href={`/book/${practitioner.slug}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="rounded bg-muted px-1.5 py-0.5 font-mono text-xs hover:underline"
+            >
+              /book/{practitioner.slug} ↗
+            </a>
           </p>
         </div>
         <Link
@@ -136,11 +141,11 @@ async function PractitionerDashboard({
                 end_at: string;
                 type: string;
                 status: string;
-                patients: { profiles: { full_name: string } };
+                patients: { full_name?: string | null; profiles?: { full_name: string } | null } | null;
               };
               const start = new Date(a.start_at);
               const end = new Date(a.end_at);
-              const patientName = a.patients?.profiles?.full_name ?? "Patient";
+              const patientName = a.patients?.full_name || a.patients?.profiles?.full_name || "Patient";
               return (
                 <div
                   key={a.id}
