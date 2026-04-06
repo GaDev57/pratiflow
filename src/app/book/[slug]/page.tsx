@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 import { BookingWidget } from "./booking-widget";
 import { resolveTheme, getLogoShapeClass } from "@/lib/booking-themes";
 
+// Always fetch fresh data — practitioners may update branding at any time
+export const dynamic = "force-dynamic";
+
 interface Props {
   params: Promise<{ slug: string }>;
 }
@@ -46,7 +49,8 @@ export default async function BookingPage({ params }: Props) {
   };
   const services = (practitioner.services ?? []) as Service[];
   const address = practitioner.address as string | null;
-  const heroImage = practitioner.hero_image_url as string | null;
+  const rawHeroImage = practitioner.hero_image_url as string | null;
+  const heroImage = rawHeroImage?.startsWith("http") ? rawHeroImage : null;
   const sessionDurations = practitioner.session_durations as number[];
   const logoUrl = practitioner.logo_url as string | null;
   const logoShape = (practitioner.logo_shape as string) ?? "round";
@@ -60,8 +64,8 @@ export default async function BookingPage({ params }: Props) {
       <section
         className="relative flex min-h-[400px] items-center justify-center bg-cover bg-center"
         style={{
-          backgroundImage: heroImage
-            ? `url(${heroImage})`
+          background: heroImage
+            ? `url(${heroImage}) center/cover no-repeat, ${theme.gradient}`
             : theme.gradient,
         }}
       >
