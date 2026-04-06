@@ -19,14 +19,47 @@ export const LOGO_SHAPES: { id: LogoShape; name: string; className: string }[] =
   { id: "rectangle", name: "Rectangle", className: "rounded-xl" },
 ];
 
-/** Generate a gradient from a single hex color */
+// --- Font pairs ---
+export const FONT_PAIRS = [
+  { id: "modern", name: "Moderne", heading: "font-sans", body: "font-sans", description: "Inter / Sans-serif" },
+  { id: "classic", name: "Classique", heading: "font-serif", body: "font-sans", description: "Serif titres / Sans-serif texte" },
+  { id: "elegant", name: "Élégant", heading: "font-serif", body: "font-serif", description: "Serif partout" },
+  { id: "minimal", name: "Minimal", heading: "font-mono", body: "font-sans", description: "Mono titres / Sans-serif texte" },
+  { id: "warm", name: "Chaleureux", heading: "font-sans", body: "font-sans", description: "Arrondi et accueillant" },
+] as const;
+
+export type FontPairId = (typeof FONT_PAIRS)[number]["id"];
+
+// --- Layout variants ---
+export const LAYOUT_VARIANTS = [
+  { id: "classic", name: "Classique", description: "Sections empilées avec héro pleine largeur" },
+  { id: "modern", name: "Moderne", description: "Design épuré avec plus d'espace" },
+  { id: "compact", name: "Compact", description: "Tout sur une page, idéal mobile" },
+] as const;
+
+export type LayoutVariantId = (typeof LAYOUT_VARIANTS)[number]["id"];
+
+// --- Section definitions ---
+export const ALL_SECTIONS = [
+  { id: "hero", name: "En-tête", alwaysVisible: true },
+  { id: "about", name: "À propos" },
+  { id: "services", name: "Approches / Services" },
+  { id: "testimonials", name: "Témoignages" },
+  { id: "faq", name: "Questions fréquentes" },
+  { id: "info", name: "Informations pratiques" },
+  { id: "gallery", name: "Galerie photos" },
+  { id: "booking", name: "Prise de rendez-vous", alwaysVisible: true },
+] as const;
+
+export const DEFAULT_SECTION_ORDER = ALL_SECTIONS.map((s) => s.id);
+
+// --- Existing helpers ---
+
 export function generateGradient(hex: string): string {
   const r = parseInt(hex.slice(1, 3), 16);
   const g = parseInt(hex.slice(3, 5), 16);
   const b = parseInt(hex.slice(5, 7), 16);
-  // Mid: lighten by 30%
   const mid = `rgb(${Math.min(255, r + 40)}, ${Math.min(255, g + 40)}, ${Math.min(255, b + 40)})`;
-  // End: lighten by 60%
   const end = `rgb(${Math.min(255, r + 80)}, ${Math.min(255, g + 80)}, ${Math.min(255, b + 80)})`;
   return `linear-gradient(135deg, ${hex} 0%, ${mid} 50%, ${end} 100%)`;
 }
@@ -35,13 +68,9 @@ export function getTheme(id: string) {
   return BOOKING_THEMES.find((t) => t.id === id) ?? BOOKING_THEMES[0];
 }
 
-/** Resolve the effective theme: custom color overrides preset */
 export function resolveTheme(themeId: string | null, customPrimary: string | null) {
   if (customPrimary && /^#[0-9a-fA-F]{6}$/.test(customPrimary)) {
-    return {
-      gradient: generateGradient(customPrimary),
-      primary: customPrimary,
-    };
+    return { gradient: generateGradient(customPrimary), primary: customPrimary };
   }
   return getTheme(themeId ?? "default");
 }
@@ -55,4 +84,9 @@ export function getLogoShapeClass(shape: string | null): { container: string; si
     default:
       return { container: "rounded-full", size: "h-28 w-28" };
   }
+}
+
+export function getFontClasses(fontPair: string | null) {
+  const pair = FONT_PAIRS.find((f) => f.id === fontPair) ?? FONT_PAIRS[0];
+  return { heading: pair.heading, body: pair.body };
 }

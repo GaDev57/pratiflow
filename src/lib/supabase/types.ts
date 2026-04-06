@@ -1,3 +1,21 @@
+export interface Testimonial {
+  text: string;
+  author: string;
+  rating: number;
+}
+
+export interface FaqItem {
+  question: string;
+  answer: string;
+}
+
+export interface SocialLinks {
+  instagram?: string;
+  linkedin?: string;
+  doctolib?: string;
+  website?: string;
+}
+
 export type UserRole = "practitioner" | "patient";
 
 export type AppointmentType = "in_person" | "teleconsultation";
@@ -75,6 +93,15 @@ export interface Database {
           custom_primary_color: string | null;
           custom_secondary_color: string | null;
           logo_shape: string;
+          testimonials: Testimonial[];
+          faq: FaqItem[];
+          social_links: SocialLinks;
+          gallery_images: string[];
+          font_pair: string;
+          section_order: string[];
+          hidden_sections: string[];
+          cta_text: string;
+          layout_variant: string;
           created_at: string;
           updated_at: string;
         };
@@ -99,6 +126,15 @@ export interface Database {
           custom_primary_color?: string | null;
           custom_secondary_color?: string | null;
           logo_shape?: string;
+          testimonials?: Testimonial[];
+          faq?: FaqItem[];
+          social_links?: SocialLinks;
+          gallery_images?: string[];
+          font_pair?: string;
+          section_order?: string[];
+          hidden_sections?: string[];
+          cta_text?: string;
+          layout_variant?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -121,6 +157,15 @@ export interface Database {
           custom_primary_color?: string | null;
           custom_secondary_color?: string | null;
           logo_shape?: string;
+          testimonials?: Testimonial[];
+          faq?: FaqItem[];
+          social_links?: SocialLinks;
+          gallery_images?: string[];
+          font_pair?: string;
+          section_order?: string[];
+          hidden_sections?: string[];
+          cta_text?: string;
+          layout_variant?: string;
           updated_at?: string;
         };
       };
