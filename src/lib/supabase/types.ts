@@ -70,6 +70,11 @@ export interface Database {
           services: Record<string, unknown>[];
           address: string | null;
           hero_image_url: string | null;
+          logo_url: string | null;
+          booking_theme: string | null;
+          custom_primary_color: string | null;
+          custom_secondary_color: string | null;
+          logo_shape: string;
           created_at: string;
           updated_at: string;
         };
@@ -89,6 +94,11 @@ export interface Database {
           services?: Record<string, unknown>[];
           address?: string | null;
           hero_image_url?: string | null;
+          logo_url?: string | null;
+          booking_theme?: string | null;
+          custom_primary_color?: string | null;
+          custom_secondary_color?: string | null;
+          logo_shape?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -106,6 +116,11 @@ export interface Database {
           services?: Record<string, unknown>[];
           address?: string | null;
           hero_image_url?: string | null;
+          logo_url?: string | null;
+          booking_theme?: string | null;
+          custom_primary_color?: string | null;
+          custom_secondary_color?: string | null;
+          logo_shape?: string;
           updated_at?: string;
         };
       };

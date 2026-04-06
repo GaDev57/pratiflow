@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -32,9 +32,56 @@ export function PublicPageEditor({
   const [bio, setBio] = useState(initialBio);
   const [address, setAddress] = useState(initialAddress);
   const [heroImage, setHeroImage] = useState(initialHeroImage);
+  const [heroPreview, setHeroPreview] = useState(initialHeroImage);
   const [services, setServices] = useState<Service[]>(initialServices);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [uploading, setUploading] = useState(false);
+  const [dragOver, setDragOver] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const handleHeroFile = useCallback(async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      setUploadError("Seules les images sont acceptées (PNG, JPG, WebP)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      setUploadError("Le fichier ne doit pas dépasser 5 Mo");
+      return;
+    }
+
+    setUploading(true);
+    setUploadError(null);
+
+    const reader = new FileReader();
+    reader.onload = (e) => setHeroPreview(e.target?.result as string);
+    reader.readAsDataURL(file);
+
+    const supabase = createClient();
+    const ext = file.name.split(".").pop();
+    const path = `heroes/${practitionerId}.${ext}`;
+
+    const { error } = await supabase.storage
+      .from("public-assets")
+      .upload(path, file, { upsert: true });
+
+    if (error) {
+      setUploadError("Erreur upload : " + error.message);
+      setUploading(false);
+      return;
+    }
+
+    const { data: urlData } = supabase.storage.from("public-assets").getPublicUrl(path);
+    setHeroImage(urlData.publicUrl);
+    setUploading(false);
+  }, [practitionerId]);
+
+  function handleHeroDrop(e: React.DragEvent) {
+    e.preventDefault();
+    setDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) handleHeroFile(file);
+  }
 
   function addService() {
     setServices([...services, { title: "", description: "" }]);
@@ -73,16 +120,54 @@ export function PublicPageEditor({
 
   return (
     <div className="space-y-6">
+      {/* Hero image upload */}
       <div className="space-y-2">
-        <Label>Image héro (URL)</Label>
-        <Input
-          value={heroImage}
-          onChange={(e) => setHeroImage(e.target.value)}
-          placeholder="https://exemple.com/image.jpg"
+        <Label>Image de couverture</Label>
+        <div
+          onDragOver={(e) => { e.preventDefault(); setDragOver(true); }}
+          onDragLeave={() => setDragOver(false)}
+          onDrop={handleHeroDrop}
+          onClick={() => document.getElementById("hero-input")?.click()}
+          className={`relative flex h-48 cursor-pointer items-center justify-center overflow-hidden rounded-xl border-2 border-dashed transition ${
+            dragOver ? "border-primary bg-primary/5" : "border-muted-foreground/25 hover:border-primary/50"
+          }`}
+        >
+          {heroPreview ? (
+            <>
+              <img src={heroPreview} alt="Aperçu héro" className="h-full w-full object-cover" />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 transition hover:opacity-100">
+                <span className="rounded-lg bg-white/90 px-4 py-2 text-sm font-medium text-gray-800">
+                  Changer l&apos;image
+                </span>
+              </div>
+            </>
+          ) : (
+            <div className="text-center text-sm text-muted-foreground">
+              <p className="text-3xl">+</p>
+              <p>Glissez ou cliquez pour ajouter une image de couverture</p>
+              <p className="mt-1 text-xs">PNG, JPG, WebP — Max 5 Mo — Recommandé : 1920x600</p>
+            </div>
+          )}
+        </div>
+        <input
+          id="hero-input"
+          type="file"
+          accept="image/*"
+          className="hidden"
+          onChange={(e) => { const f = e.target.files?.[0]; if (f) handleHeroFile(f); }}
         />
-        <p className="text-xs text-muted-foreground">
-          Image de fond pour la section héro de votre page publique
-        </p>
+        {heroImage && (
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-destructive"
+            onClick={() => { setHeroImage(""); setHeroPreview(""); }}
+          >
+            Supprimer l&apos;image
+          </Button>
+        )}
+        {uploadError && <p className="text-sm text-destructive">{uploadError}</p>}
+        {uploading && <p className="text-sm text-muted-foreground">Upload en cours...</p>}
       </div>
 
       <div className="space-y-2">
@@ -150,7 +235,7 @@ export function PublicPageEditor({
       </div>
 
       <div className="flex items-center gap-3">
-        <Button onClick={handleSave} disabled={saving}>
+        <Button onClick={handleSave} disabled={saving || uploading}>
           {saving ? "Enregistrement..." : "Enregistrer"}
         </Button>
         {saved && (

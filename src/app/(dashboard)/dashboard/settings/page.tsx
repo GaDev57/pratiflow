@@ -84,6 +84,8 @@ export default async function SettingsPage() {
           practitionerId={practitioner.id as string}
           initialTheme={(practitioner.booking_theme as string) ?? "default"}
           initialLogoUrl={(practitioner.logo_url as string) ?? ""}
+          initialCustomColor={(practitioner.custom_primary_color as string) ?? ""}
+          initialLogoShape={(practitioner.logo_shape as string) ?? "round"}
         />
       </section>
 

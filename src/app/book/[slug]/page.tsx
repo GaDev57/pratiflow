@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BookingWidget } from "./booking-widget";
-import { getTheme } from "@/lib/booking-themes";
+import { resolveTheme, getLogoShapeClass } from "@/lib/booking-themes";
 
 interface Props {
   params: Promise<{ slug: string }>;
@@ -49,7 +49,10 @@ export default async function BookingPage({ params }: Props) {
   const heroImage = practitioner.hero_image_url as string | null;
   const sessionDurations = practitioner.session_durations as number[];
   const logoUrl = practitioner.logo_url as string | null;
-  const theme = getTheme((practitioner.booking_theme as string) ?? "default");
+  const logoShape = (practitioner.logo_shape as string) ?? "round";
+  const customColor = practitioner.custom_primary_color as string | null;
+  const theme = resolveTheme((practitioner.booking_theme as string) ?? "default", customColor);
+  const logoClasses = getLogoShapeClass(logoShape);
 
   return (
     <div className="min-h-screen bg-background">
@@ -68,7 +71,7 @@ export default async function BookingPage({ params }: Props) {
             <img
               src={logoUrl}
               alt={`Logo ${profile.full_name}`}
-              className="mx-auto mb-6 h-28 w-28 rounded-full border-4 border-white/80 bg-white/20 object-contain p-2 shadow-lg"
+              className={`mx-auto mb-6 ${logoClasses.size} ${logoClasses.container} border-4 border-white/80 bg-white/20 object-contain p-2 shadow-lg`}
             />
           ) : profile.avatar_url ? (
             <img

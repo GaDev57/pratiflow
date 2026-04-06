@@ -11,6 +11,48 @@ export const BOOKING_THEMES = [
 
 export type ThemeId = (typeof BOOKING_THEMES)[number]["id"];
 
+export type LogoShape = "round" | "square" | "rectangle";
+
+export const LOGO_SHAPES: { id: LogoShape; name: string; className: string }[] = [
+  { id: "round", name: "Rond", className: "rounded-full" },
+  { id: "square", name: "Carré", className: "rounded-xl" },
+  { id: "rectangle", name: "Rectangle", className: "rounded-xl" },
+];
+
+/** Generate a gradient from a single hex color */
+export function generateGradient(hex: string): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  // Mid: lighten by 30%
+  const mid = `rgb(${Math.min(255, r + 40)}, ${Math.min(255, g + 40)}, ${Math.min(255, b + 40)})`;
+  // End: lighten by 60%
+  const end = `rgb(${Math.min(255, r + 80)}, ${Math.min(255, g + 80)}, ${Math.min(255, b + 80)})`;
+  return `linear-gradient(135deg, ${hex} 0%, ${mid} 50%, ${end} 100%)`;
+}
+
 export function getTheme(id: string) {
   return BOOKING_THEMES.find((t) => t.id === id) ?? BOOKING_THEMES[0];
+}
+
+/** Resolve the effective theme: custom color overrides preset */
+export function resolveTheme(themeId: string | null, customPrimary: string | null) {
+  if (customPrimary && /^#[0-9a-fA-F]{6}$/.test(customPrimary)) {
+    return {
+      gradient: generateGradient(customPrimary),
+      primary: customPrimary,
+    };
+  }
+  return getTheme(themeId ?? "default");
+}
+
+export function getLogoShapeClass(shape: string | null): { container: string; size: string } {
+  switch (shape) {
+    case "square":
+      return { container: "rounded-xl", size: "h-28 w-28" };
+    case "rectangle":
+      return { container: "rounded-xl", size: "h-20 w-36" };
+    default:
+      return { container: "rounded-full", size: "h-28 w-28" };
+  }
 }
