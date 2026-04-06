@@ -1,10 +1,23 @@
 import { type NextRequest, NextResponse } from "next/server";
 
 export function middleware(request: NextRequest) {
-  // Session refresh and auth redirects are handled by server components
-  // (dashboard layout redirects to /login, auth pages redirect to /dashboard)
-  // This middleware is kept minimal for Netlify Edge Function compatibility
-  return NextResponse.next();
+  const response = NextResponse.next();
+
+  // Security headers for all SSR pages
+  response.headers.set("X-Frame-Options", "DENY");
+  response.headers.set("X-Content-Type-Options", "nosniff");
+  response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
+  response.headers.set("X-XSS-Protection", "1; mode=block");
+
+  // Allow Jitsi iframe + camera/microphone for teleconsultation rooms
+  if (request.nextUrl.pathname.startsWith("/room/")) {
+    response.headers.set("X-Frame-Options", "SAMEORIGIN");
+    response.headers.set("Permissions-Policy", "camera=(self), microphone=(self)");
+  } else {
+    response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
+  }
+
+  return response;
 }
 
 export const config = {

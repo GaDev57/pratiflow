@@ -120,6 +120,12 @@ npm run lint      # ESLint
 - Storage: signed URLs only (1h expiry), encrypted at rest (AES-256), TLS 1.3 in transit
 - RLS on all 11 tables + storage bucket policies
 
+## Deployment
+- **NEVER** deploy via `npx netlify-cli deploy --build --prod` — local Node version (v24) is incompatible with Netlify runtime (Node 22), causing 502 errors
+- **ALWAYS** deploy via `git push origin master` → Netlify auto-builds from GitHub with Node 22
+- To trigger a rebuild without a new commit: `npx netlify-cli api createSiteBuild --data '{"site_id":"81a50187-3817-4360-86ee-e94d3f7f3619"}'`
+- Env vars managed via Netlify dashboard or `npx netlify-cli env:set`
+
 ## Règle de vérification
 
 Après CHAQUE modification (code, DB, API), vérifier que ça fonctionne AVANT de passer à la suite :
