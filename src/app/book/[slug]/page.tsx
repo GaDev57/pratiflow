@@ -66,6 +66,13 @@ export default async function BookingPage({ params }: Props) {
   const ctaText = (practitioner.cta_text as string) || "Prendre rendez-vous";
   const layout = (practitioner.layout_variant as string) ?? "classic";
 
+  const layoutConfig = {
+    compact: { heroHeight: "min-h-[300px]", container: "max-w-3xl", sectionPadding: "py-10", headingGap: "" },
+    modern:  { heroHeight: "min-h-[350px]", container: "max-w-4xl", sectionPadding: "py-12", headingGap: "space-y-2" },
+    classic: { heroHeight: "min-h-[400px]", container: "max-w-5xl", sectionPadding: "py-16", headingGap: "" },
+  };
+  const lc = layoutConfig[layout as keyof typeof layoutConfig] ?? layoutConfig.classic;
+
   const isVisible = (id: string) => !hiddenSections.includes(id);
 
   // --- Section renderers ---
@@ -73,9 +80,7 @@ export default async function BookingPage({ params }: Props) {
     hero: (
       <section
         key="hero"
-        className={`relative flex items-center justify-center bg-cover bg-center ${
-          layout === "compact" ? "min-h-[300px]" : "min-h-[400px]"
-        }`}
+        className={`relative flex items-center justify-center bg-cover bg-center ${lc.heroHeight}`}
         style={{
           background: heroImage
             ? `url(${heroImage}) center/cover no-repeat, ${theme.gradient}`
@@ -130,7 +135,7 @@ export default async function BookingPage({ params }: Props) {
     ),
 
     about: practitioner.bio ? (
-      <section key="about" className={layout === "compact" ? "py-10" : "py-16"}>
+      <section key="about" className={lc.sectionPadding}>
         <div className="grid items-center gap-10 md:grid-cols-3">
           {profile.avatar_url && (
             <div className="flex justify-center md:col-span-1">
@@ -141,7 +146,7 @@ export default async function BookingPage({ params }: Props) {
               />
             </div>
           )}
-          <div className={profile.avatar_url ? "md:col-span-2" : "md:col-span-3"}>
+          <div className={`${profile.avatar_url ? "md:col-span-2" : "md:col-span-3"} ${lc.headingGap}`}>
             <h2 className={`text-2xl font-bold ${fonts.heading}`}>À propos</h2>
             <p className={`mt-4 whitespace-pre-line leading-relaxed text-muted-foreground ${fonts.body}`}>
               {practitioner.bio}
@@ -152,7 +157,7 @@ export default async function BookingPage({ params }: Props) {
     ) : null,
 
     services: services.length > 0 ? (
-      <section key="services" className={`border-t ${layout === "compact" ? "py-10" : "py-16"}`}>
+      <section key="services" className={`border-t ${lc.sectionPadding}`}>
         <h2 className={`text-center text-2xl font-bold ${fonts.heading}`}>Mes approches</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {services.map((service, index) => (
@@ -166,7 +171,7 @@ export default async function BookingPage({ params }: Props) {
     ) : null,
 
     testimonials: testimonials.length > 0 ? (
-      <section key="testimonials" className={`border-t ${layout === "compact" ? "py-10" : "py-16"}`}>
+      <section key="testimonials" className={`border-t ${lc.sectionPadding}`}>
         <h2 className={`text-center text-2xl font-bold ${fonts.heading}`}>Ce que disent mes patients</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {testimonials.map((t, i) => (
@@ -185,7 +190,7 @@ export default async function BookingPage({ params }: Props) {
     ) : null,
 
     faq: faq.length > 0 ? (
-      <section key="faq" className={`border-t ${layout === "compact" ? "py-10" : "py-16"}`}>
+      <section key="faq" className={`border-t ${lc.sectionPadding}`}>
         <h2 className={`text-center text-2xl font-bold ${fonts.heading}`}>Questions fréquentes</h2>
         <div className="mx-auto mt-10 max-w-2xl space-y-4">
           {faq.map((f, i) => (
@@ -206,7 +211,7 @@ export default async function BookingPage({ params }: Props) {
     ) : null,
 
     info: (
-      <section key="info" className={`border-t ${layout === "compact" ? "py-10" : "py-16"}`}>
+      <section key="info" className={`border-t ${lc.sectionPadding}`}>
         <h2 className={`text-center text-2xl font-bold ${fonts.heading}`}>Informations pratiques</h2>
         <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           <div className="rounded-xl border bg-card p-6">
@@ -240,7 +245,7 @@ export default async function BookingPage({ params }: Props) {
     ),
 
     gallery: galleryImages.length > 0 ? (
-      <section key="gallery" className={`border-t ${layout === "compact" ? "py-10" : "py-16"}`}>
+      <section key="gallery" className={`border-t ${lc.sectionPadding}`}>
         <h2 className={`text-center text-2xl font-bold ${fonts.heading}`}>Le cabinet en images</h2>
         <div className="mt-10 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {galleryImages.map((url, i) => (
@@ -253,7 +258,7 @@ export default async function BookingPage({ params }: Props) {
     ) : null,
 
     booking: (
-      <section key="booking" id="booking" className={`border-t ${layout === "compact" ? "py-10" : "py-16"}`}>
+      <section key="booking" id="booking" className={`border-t ${lc.sectionPadding}`}>
         <h2 className={`mb-8 text-center text-2xl font-bold ${fonts.heading}`}>{ctaText}</h2>
         <div className="mx-auto max-w-lg">
           <BookingWidget
@@ -279,7 +284,7 @@ export default async function BookingPage({ params }: Props) {
       {/* Hero is always first if visible */}
       {sectionMap.hero}
 
-      <div className={`mx-auto px-4 ${layout === "compact" ? "max-w-3xl" : "max-w-5xl"}`}>
+      <div className={`mx-auto px-4 ${lc.container}`}>
         {orderedSections.filter((node) => {
           // Skip hero (rendered above) and booking (rendered separately or in order)
           const key = (node as React.ReactElement)?.key;
