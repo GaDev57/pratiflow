@@ -266,81 +266,64 @@ describe("getAvailableSlots", () => {
 });
 
 describe("getAvailableDates", () => {
-  // NOTE: getAvailableDates uses new Date(year, month, day).toISOString() for dateStr,
-  // which returns UTC dates. In UTC+1 (CET), midnight local = 23:00 UTC the previous day,
-  // so the ISO date string is one day behind local time.
-  // The function filters by rule.day_of_week using d.getDay() (local time) —
-  // so for day_of_week=1 (Monday local), the returned dateStr will be the Sunday ISO date.
-  //
-  // Concrete example in CET (UTC+1): local Monday Dec 7 → ISO date "2026-12-06"
-  // The actual returned dates for Monday rule in Dec 2026 are:
-  //   "2026-12-06", "2026-12-13", "2026-12-20", "2026-12-27"
+  // After timezone fix: getAvailableDates now uses local date formatting
+  // (YYYY-MM-DD from getFullYear/getMonth/getDate) instead of toISOString().
+  // Dec 2026 Mondays (local): 7, 14, 21, 28
+  // Dec 2026 Wednesdays (local): 2, 9, 16, 23, 30
 
   const mondayRuleDec: AvailabilityRule = {
-    day_of_week: 1, // Monday (local time)
+    day_of_week: 1, // Monday
     start_time: "09:00",
     end_time: "12:00",
     is_active: true,
   };
 
   const wednesdayRule: AvailabilityRule = {
-    day_of_week: 3, // Wednesday (local time)
+    day_of_week: 3, // Wednesday
     start_time: "14:00",
     end_time: "17:00",
     is_active: true,
   };
 
-  it("returns only dates matching active rules", () => {
+  it("returns only dates matching active rules (correct local dates)", () => {
     const dates = getAvailableDates(2026, 11, [mondayRuleDec], []);
-    // Should have exactly 4 dates (one per Monday in December 2026)
-    expect(dates.length).toBeGreaterThan(0);
-    // All returned dates must correspond to local Mondays (the function picks day_of_week=1)
-    // Verify by checking no Sunday rule date leaks in
-    expect(dates.length).toBe(4);
-    // The ISO dates returned (UTC) for CET Mondays are one day behind
-    expect(dates).toContain("2026-12-06"); // local Mon Dec 7
-    expect(dates).toContain("2026-12-13"); // local Mon Dec 14
-    expect(dates).toContain("2026-12-20"); // local Mon Dec 21
-    expect(dates).toContain("2026-12-27"); // local Mon Dec 28
+    expect(dates).toHaveLength(4);
+    expect(dates).toContain("2026-12-07");
+    expect(dates).toContain("2026-12-14");
+    expect(dates).toContain("2026-12-21");
+    expect(dates).toContain("2026-12-28");
   });
 
   it("returns dates for multiple active rules", () => {
     const dates = getAvailableDates(2026, 11, [mondayRuleDec, wednesdayRule], []);
-    // Should have Mondays + Wednesdays (4 + 4 = 8 in December 2026)
-    expect(dates.length).toBeGreaterThan(4);
-    // Confirm Monday dates are present
-    expect(dates).toContain("2026-12-06"); // local Mon Dec 7
-    // Confirm Wednesday dates are present (local Wed Dec 2 → ISO "2026-12-01")
-    // Local Wed Dec 2, 9, 16, 23, 30 → ISO "2026-12-01", "2026-12-08", etc.
-    const mondayDates = ["2026-12-06", "2026-12-13", "2026-12-20", "2026-12-27"];
-    const wednesdayDates = dates.filter((d) => !mondayDates.includes(d));
-    expect(wednesdayDates.length).toBeGreaterThan(0);
+    // 4 Mondays + 5 Wednesdays = 9
+    expect(dates).toHaveLength(9);
+    expect(dates).toContain("2026-12-07"); // Monday
+    expect(dates).toContain("2026-12-02"); // Wednesday
+    expect(dates).toContain("2026-12-30"); // Wednesday
   });
 
   it("excludes full-day blocked dates", () => {
-    // The function stores dateStr as ISO UTC, so we must block with the ISO date
     const fullDayBlock: AvailabilityException = {
-      date: "2026-12-06", // ISO date for local Monday Dec 7 in CET
+      date: "2026-12-07",
       start_time: null,
       end_time: null,
     };
     const dates = getAvailableDates(2026, 11, [mondayRuleDec], [fullDayBlock]);
-    expect(dates).not.toContain("2026-12-06");
-    // Other Mondays still present
-    expect(dates).toContain("2026-12-13");
-    expect(dates).toContain("2026-12-20");
-    expect(dates).toContain("2026-12-27");
+    expect(dates).not.toContain("2026-12-07");
+    expect(dates).toContain("2026-12-14");
+    expect(dates).toContain("2026-12-21");
+    expect(dates).toContain("2026-12-28");
   });
 
-  it("does not exclude dates with partial-time exceptions (only full-day blocks matter)", () => {
+  it("does not exclude dates with partial-time exceptions", () => {
     const partialBlock: AvailabilityException = {
-      date: "2026-12-06", // ISO date for local Monday Dec 7 in CET
+      date: "2026-12-07",
       start_time: "10:00",
       end_time: "11:00",
     };
     const dates = getAvailableDates(2026, 11, [mondayRuleDec], [partialBlock]);
-    // Partial exception should NOT remove the date from available dates
-    expect(dates).toContain("2026-12-06");
+    expect(dates).toContain("2026-12-07");
   });
 
   it("returns empty array when no active rules are provided", () => {
@@ -353,12 +336,11 @@ describe("getAvailableDates", () => {
   });
 
   it("returns empty array when all dates are full-day blocked", () => {
-    // Block all 4 Monday ISO dates in December 2026
     const blocks: AvailabilityException[] = [
-      { date: "2026-12-06", start_time: null, end_time: null },
-      { date: "2026-12-13", start_time: null, end_time: null },
-      { date: "2026-12-20", start_time: null, end_time: null },
-      { date: "2026-12-27", start_time: null, end_time: null },
+      { date: "2026-12-07", start_time: null, end_time: null },
+      { date: "2026-12-14", start_time: null, end_time: null },
+      { date: "2026-12-21", start_time: null, end_time: null },
+      { date: "2026-12-28", start_time: null, end_time: null },
     ];
     const dates = getAvailableDates(2026, 11, [mondayRuleDec], blocks);
     expect(dates).toEqual([]);

@@ -165,7 +165,10 @@ export function getAvailableDates(
 
   for (let day = 1; day <= daysInMonth; day++) {
     const d = new Date(year, month, day);
-    const dateStr = d.toISOString().substring(0, 10);
+    const yy = d.getFullYear();
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    const dateStr = `${yy}-${mm}-${dd}`;
     const dow = d.getDay();
 
     const hasRule = rules.some((r) => r.is_active && r.day_of_week === dow);
