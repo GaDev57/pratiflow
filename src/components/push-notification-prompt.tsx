@@ -1,23 +1,18 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 export function PushNotificationPrompt() {
-  const [supported, setSupported] = useState(false);
-  const [permission, setPermission] = useState<NotificationPermission>("default");
-  const [dismissed, setDismissed] = useState(false);
-
-  useEffect(() => {
-    if ("serviceWorker" in navigator && "PushManager" in window) {
-      setSupported(true);
-      setPermission(Notification.permission);
-    }
-    // Check if user already dismissed
-    if (localStorage.getItem("push-dismissed") === "true") {
-      setDismissed(true);
-    }
-  }, []);
+  const [supported] = useState(
+    () => typeof window !== "undefined" && "serviceWorker" in navigator && "PushManager" in window
+  );
+  const [permission, setPermission] = useState<NotificationPermission>(
+    () => (typeof window !== "undefined" && "Notification" in window ? Notification.permission : "default")
+  );
+  const [dismissed, setDismissed] = useState(
+    () => (typeof window !== "undefined" ? localStorage.getItem("push-dismissed") === "true" : false)
+  );
 
   async function enableNotifications() {
     try {

@@ -62,7 +62,8 @@ export function SubscriptionManager({ currentPlan }: Props) {
 
       const data = await res.json();
       if (data.url) {
-        window.location.href = data.url;
+        const redirectUrl = data.url;
+        window.location.assign(redirectUrl);
       }
     } catch {
       setLoading(null);

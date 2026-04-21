@@ -56,7 +56,7 @@ export function BookingWidget({
     const now = new Date();
     return { year: now.getFullYear(), month: now.getMonth() };
   });
-  const [availableDates, setAvailableDates] = useState<string[]>([]);
+  // availableDates computed inline below (no state needed — pure computation)
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
 
   // Slot selection
@@ -73,15 +73,12 @@ export function BookingWidget({
   const [motif, setMotif] = useState("");
 
   // Compute available dates when month changes
-  useEffect(() => {
-    const dates = getAvailableDates(
-      currentMonth.year,
-      currentMonth.month,
-      rules,
-      exceptions
-    );
-    setAvailableDates(dates);
-  }, [currentMonth, rules, exceptions]);
+  const availableDatesComputed = getAvailableDates(
+    currentMonth.year,
+    currentMonth.month,
+    rules,
+    exceptions
+  );
 
   // Fetch slots when date is selected (including Google Calendar busy periods)
   useEffect(() => {
@@ -330,7 +327,7 @@ export function BookingWidget({
               const dateStr = `${currentMonth.year}-${String(
                 currentMonth.month + 1
               ).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-              const isAvailable = availableDates.includes(dateStr);
+              const isAvailable = availableDatesComputed.includes(dateStr);
 
               return (
                 <button
