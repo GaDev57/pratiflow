@@ -31,7 +31,7 @@ export default async function DashboardLayout({
             <nav className="hidden gap-4 sm:flex">
               <Link
                 href="/dashboard"
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Tableau de bord
               </Link>
@@ -39,31 +39,31 @@ export default async function DashboardLayout({
                 <>
                   <Link
                     href="/dashboard/calendar"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Calendrier
                   </Link>
                   <Link
                     href="/dashboard/patients"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Patients
                   </Link>
                   <Link
                     href="/dashboard/templates"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Modèles
                   </Link>
                   <Link
                     href="/dashboard/settings"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Paramètres
                   </Link>
                   <Link
                     href="/dashboard/access-logs"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Journal
                   </Link>
@@ -73,19 +73,19 @@ export default async function DashboardLayout({
                 <>
                   <Link
                     href="/dashboard/appointments"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Mes rendez-vous
                   </Link>
                   <Link
                     href="/dashboard/documents"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Documents
                   </Link>
                   <Link
                     href="/dashboard/messages"
-                    className="text-sm text-muted-foreground hover:text-foreground"
+                    className="text-sm text-muted-foreground transition-colors hover:text-foreground"
                   >
                     Messages
                   </Link>
@@ -93,7 +93,7 @@ export default async function DashboardLayout({
               )}
               <Link
                 href="/dashboard/account"
-                className="text-sm text-muted-foreground hover:text-foreground"
+                className="text-sm text-muted-foreground transition-colors hover:text-foreground"
               >
                 Mon compte
               </Link>

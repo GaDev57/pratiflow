@@ -109,13 +109,10 @@ async function PractitionerDashboard({
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard title="RDV aujourd'hui" value={String(todayCount ?? 0)} />
-        <StatCard title="RDV cette semaine" value={String(weekCount ?? 0)} />
-        <StatCard title="CA du mois" value={`${monthRevenue}€`} />
-        <StatCard
-          title="Patients"
-          value={String(patientCount ?? 0)}
-        />
+        <StatCard title="RDV aujourd'hui" value={String(todayCount ?? 0)} index={0} />
+        <StatCard title="RDV cette semaine" value={String(weekCount ?? 0)} index={1} />
+        <StatCard title="CA du mois" value={`${monthRevenue}€`} index={2} />
+        <StatCard title="Patients" value={String(patientCount ?? 0)} index={3} />
       </div>
 
       <div className="rounded-lg border p-6">
@@ -149,7 +146,7 @@ async function PractitionerDashboard({
               return (
                 <div
                   key={a.id}
-                  className="flex items-center gap-4 rounded-md border px-4 py-2"
+                  className="flex items-center gap-4 rounded-md border px-4 py-2 transition-colors hover:bg-muted/50"
                 >
                   <span className="text-sm font-medium">
                     {start.toLocaleTimeString("fr-FR", {
@@ -322,9 +319,9 @@ async function PatientDashboard({
   );
 }
 
-function StatCard({ title, value }: { title: string; value: string }) {
+function StatCard({ title, value, index = 0 }: { title: string; value: string; index?: number }) {
   return (
-    <div className="rounded-lg border p-4">
+    <div className={`animate-fade-in stagger-${index + 1} rounded-lg border p-4 transition-shadow hover:shadow-md`}>
       <p className="text-sm text-muted-foreground">{title}</p>
       <p className="mt-1 text-2xl font-bold">{value}</p>
     </div>
