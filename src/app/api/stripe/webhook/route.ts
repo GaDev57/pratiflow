@@ -43,13 +43,18 @@ export async function POST(request: Request) {
 
       if (session.mode === "payment" && session.metadata?.appointment_id) {
         // Update appointment with payment intent
-        await supabase
+        const { error: updateError } = await supabase
           .from("appointments")
           .update({
             stripe_payment_intent_id: session.payment_intent as string,
             status: "confirmed",
           })
           .eq("id", session.metadata.appointment_id);
+
+        if (updateError) {
+          console.error("[STRIPE/WEBHOOK] Failed to confirm appointment:", updateError.message);
+          return NextResponse.json({ error: "DB update failed" }, { status: 500 });
+        }
 
         // Create notification for practitioner
         const { data: appointment } = await supabase
@@ -62,24 +67,32 @@ export async function POST(request: Request) {
           const practitioner = appointment.practitioners as unknown as {
             profile_id: string;
           };
-          await supabase.from("notifications").insert({
+          const { error: notifError } = await supabase.from("notifications").insert({
             user_id: practitioner.profile_id,
             type: "payment_received",
             title: "Paiement reçu",
             body: `Un paiement de ${(session.amount_total ?? 0) / 100}€ a été reçu pour un rendez-vous.`,
             related_id: session.metadata.appointment_id,
           });
+          if (notifError) {
+            console.error("[STRIPE/WEBHOOK] Failed to create notification:", notifError.message);
+          }
         }
       }
 
       // ---- Subscription activated ----
       if (session.mode === "subscription" && session.metadata?.plan) {
-        await supabase
+        const { error: subError } = await supabase
           .from("practitioners")
           .update({
             subscription_plan: session.metadata.plan,
           })
           .eq("profile_id", session.metadata.user_id);
+
+        if (subError) {
+          console.error("[STRIPE/WEBHOOK] Failed to update subscription:", subError.message);
+          return NextResponse.json({ error: "Subscription update failed" }, { status: 500 });
+        }
       }
       break;
     }
@@ -90,10 +103,15 @@ export async function POST(request: Request) {
       const customerId = subscription.customer as string;
 
       // Find practitioner by stripe customer ID and downgrade to free
-      await supabase
+      const { error } = await supabase
         .from("practitioners")
         .update({ subscription_plan: "free" })
         .eq("stripe_account_id", customerId);
+
+      if (error) {
+        console.error("[STRIPE/WEBHOOK] Failed to downgrade subscription:", error.message);
+        return NextResponse.json({ error: "Downgrade failed" }, { status: 500 });
+      }
       break;
     }
 
