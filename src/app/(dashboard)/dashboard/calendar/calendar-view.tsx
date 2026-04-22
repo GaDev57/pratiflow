@@ -234,14 +234,10 @@ export function CalendarView({
                           {STATUS_LABELS[apt.status as string] ?? (apt.status as string)}
                         </span>
                         <div className="flex gap-1">
-                          {isTeleconsultation && jitsiUrl && isConfirmed && (
-                            <Link
-                              href={jitsiUrl}
-                              target="_blank"
-                              className="rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white hover:bg-green-700"
-                            >
-                              Rejoindre
-                            </Link>
+                          {isTeleconsultation && isConfirmed && (
+                            <span className="rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white">
+                              WhatsApp
+                            </span>
                           )}
                           {isConfirmed && (
                             <>

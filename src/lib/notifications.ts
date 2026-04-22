@@ -47,11 +47,11 @@ export async function sendBookingConfirmationEmail(
             <li><strong>Date :</strong> ${data.date}</li>
             <li><strong>Heure :</strong> ${data.time}</li>
             <li><strong>Durée :</strong> ${data.duration} minutes</li>
-            <li><strong>Type :</strong> ${data.type === "teleconsultation" ? "Téléconsultation" : "En cabinet"}</li>
+            <li><strong>Type :</strong> ${data.type === "teleconsultation" ? "Téléconsultation WhatsApp" : "En cabinet"}</li>
           </ul>
           ${
             data.type === "teleconsultation"
-              ? `<p><a href="${appUrl}/room/${data.appointmentId}">Rejoindre la téléconsultation</a></p>`
+              ? `<p>La consultation se fera via <strong>WhatsApp</strong> (appel vidéo). Votre praticien vous contactera à l'heure du rendez-vous.</p>`
               : ""
           }
           <p><a href="${appUrl}/dashboard/appointments">Gérer mes rendez-vous</a></p>
@@ -81,7 +81,7 @@ export async function sendBookingConfirmationSMS(
   }
 
   try {
-    const message = `PratiFlow: RDV confirmé avec ${data.practitionerName} le ${data.date} à ${data.time} (${data.duration}min). ${data.type === "teleconsultation" ? "Téléconsultation." : "En cabinet."}`;
+    const message = `PratiFlow: RDV confirmé avec ${data.practitionerName} le ${data.date} à ${data.time} (${data.duration}min). ${data.type === "teleconsultation" ? "Téléconsultation via WhatsApp." : "En cabinet."}`;
 
     const res = await fetch(
       `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
@@ -139,7 +139,7 @@ export async function sendReminderEmail(
           </ul>
           ${
             data.type === "teleconsultation"
-              ? `<p><a href="${appUrl}/room/${data.appointmentId}">Rejoindre la téléconsultation</a></p>`
+              ? `<p>La consultation se fera via <strong>WhatsApp</strong> (appel vidéo). Votre praticien vous contactera à l'heure du rendez-vous.</p>`
               : ""
           }
           <p><a href="${appUrl}/dashboard/appointments">Gérer mes rendez-vous</a></p>

@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { BookingWidget } from "./booking-widget";
@@ -8,6 +9,36 @@ export const dynamic = "force-dynamic";
 
 interface Props {
   params: Promise<{ slug: string }>;
+}
+
+export async function generateMetadata({ params }: Props): Promise<Metadata> {
+  const { slug } = await params;
+  const supabase = await createClient();
+
+  const { data: practitioner } = await supabase
+    .from("practitioners")
+    .select("specialty, profiles!inner(full_name)")
+    .eq("slug", slug)
+    .single();
+
+  if (!practitioner) {
+    return { title: "Praticien introuvable" };
+  }
+
+  const profile = practitioner.profiles as unknown as { full_name: string };
+  const name = profile.full_name;
+  const specialty = practitioner.specialty as string;
+
+  return {
+    title: `${name} — ${specialty}`,
+    description: `Prenez rendez-vous en ligne avec ${name}, ${specialty}. Consultation en cabinet ou en vid\u00e9o.`,
+    openGraph: {
+      title: `${name} — ${specialty}`,
+      description: `Prenez rendez-vous en ligne avec ${name}, ${specialty}.`,
+      type: "website",
+      locale: "fr_FR",
+    },
+  };
 }
 
 interface Service {

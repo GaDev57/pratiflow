@@ -22,7 +22,7 @@ const PLANS = [
     period: "/mois",
     features: [
       "Rendez-vous illimités",
-      "Téléconsultation Jitsi",
+      "Téléconsultation WhatsApp",
       "Rappels SMS + email",
       "Google Calendar sync",
       "Dossier patient collaboratif",

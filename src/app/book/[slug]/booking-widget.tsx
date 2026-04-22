@@ -241,7 +241,7 @@ export function BookingWidget({
                     : "hover:bg-muted"
                 }`}
               >
-                Téléconsultation
+                Téléconsultation WhatsApp
               </button>
             </div>
           </div>

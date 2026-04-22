@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -50,18 +49,9 @@ export function AppointmentsList({
         const start = new Date(apt.start_at as string);
         const end = new Date(apt.end_at as string);
         const isUpcoming = start > new Date();
-        const canJoin =
+        const isTeleconsultation =
           (apt.type as string) === "teleconsultation" &&
-          Boolean(apt.jitsi_room_url) &&
           (apt.status as string) === "confirmed";
-
-        // Check if within join window (-10min to +duration)
-        const joinWindowStart = new Date(
-          start.getTime() - 10 * 60 * 1000
-        );
-        const joinWindowEnd = end;
-        const nowInWindow =
-          new Date() >= joinWindowStart && new Date() <= joinWindowEnd;
 
         return (
           <div
@@ -100,10 +90,10 @@ export function AppointmentsList({
 
             {showActions && isUpcoming && (
               <div className="flex gap-2">
-                {canJoin && nowInWindow && (
-                  <Link href={apt.jitsi_room_url as string}>
-                    <Button size="sm">Rejoindre</Button>
-                  </Link>
+                {isTeleconsultation && (
+                  <span className="inline-flex items-center rounded-md bg-green-600 px-3 py-1 text-xs font-medium text-white">
+                    WhatsApp
+                  </span>
                 )}
                 <Button
                   variant="outline"

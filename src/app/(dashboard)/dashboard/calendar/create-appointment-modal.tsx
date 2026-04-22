@@ -49,11 +49,6 @@ export function CreateAppointmentModal({
     const startAt = startDate.toISOString();
     const endAt = endDate.toISOString();
 
-    const jitsiRoom =
-      type === "teleconsultation"
-        ? `pratiflow-${crypto.randomUUID().substring(0, 8)}`
-        : null;
-
     const supabase = createClient();
     const { error: insertError } = await supabase.from("appointments").insert({
       practitioner_id: practitionerId,
@@ -62,7 +57,7 @@ export function CreateAppointmentModal({
       end_at: endAt,
       type,
       status: "confirmed",
-      jitsi_room_url: jitsiRoom ? `/room/${jitsiRoom}` : null,
+      jitsi_room_url: null,
     });
 
     if (insertError) {

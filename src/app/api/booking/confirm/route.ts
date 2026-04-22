@@ -44,7 +44,7 @@ export async function POST(request: Request) {
           const tz = (practitioner.timezone as string) || "Europe/Paris";
           const typeLabel =
             data.type === "teleconsultation"
-              ? "Téléconsultation"
+              ? "Téléconsultation WhatsApp"
               : "Cabinet";
 
           await createGoogleCalendarEvent(tokens, {

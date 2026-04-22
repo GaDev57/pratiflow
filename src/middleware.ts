@@ -9,13 +9,7 @@ export function middleware(request: NextRequest) {
   response.headers.set("Referrer-Policy", "strict-origin-when-cross-origin");
   response.headers.set("X-XSS-Protection", "1; mode=block");
 
-  // Allow Jitsi iframe + camera/microphone for teleconsultation rooms
-  if (request.nextUrl.pathname.startsWith("/room/")) {
-    response.headers.set("X-Frame-Options", "SAMEORIGIN");
-    response.headers.set("Permissions-Policy", "camera=(self), microphone=(self)");
-  } else {
-    response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
-  }
+  response.headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 
   return response;
 }

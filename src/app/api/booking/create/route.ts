@@ -84,11 +84,6 @@ export async function POST(request: Request) {
   }
 
   // Create appointment
-  const jitsiRoom =
-    type === "teleconsultation"
-      ? `pratiflow-${crypto.randomUUID().substring(0, 8)}`
-      : null;
-
   const { error: insertError } = await supabase.from("appointments").insert({
     practitioner_id: practitionerId,
     patient_id: patientId,
@@ -96,7 +91,7 @@ export async function POST(request: Request) {
     end_at: endAt,
     type: type || "in_person",
     status: "confirmed",
-    jitsi_room_url: jitsiRoom ? `/room/${jitsiRoom}` : null,
+    jitsi_room_url: null,
   });
 
   if (insertError) {

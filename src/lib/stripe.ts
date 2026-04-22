@@ -29,11 +29,13 @@ export const SUBSCRIPTION_PLANS = {
   },
   pro: {
     name: "Pro",
-    price: 29,
+    price: 9,
+    priceYearly: 99,
+    yearlyDiscount: "1 mois offert",
     priceId: env.STRIPE_PRO_PRICE_ID ?? "",
     features: [
       "Rendez-vous illimités",
-      "Téléconsultation Jitsi",
+      "Téléconsultation WhatsApp",
       "Rappels SMS + email",
       "Google Calendar sync",
       "Dossier patient collaboratif",
@@ -42,7 +44,9 @@ export const SUBSCRIPTION_PLANS = {
   },
   premium: {
     name: "Premium",
-    price: 59,
+    price: 19,
+    priceYearly: 199,
+    yearlyDiscount: "2 mois offerts",
     priceId: env.STRIPE_PREMIUM_PRICE_ID ?? "",
     features: [
       "Tout Pro +",
